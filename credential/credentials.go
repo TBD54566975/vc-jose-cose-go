@@ -16,7 +16,7 @@ const (
 	EnvelopedVerifiableCredentialType                    string = "EnvelopedVerifiableCredential"
 	EnvelopedVerifiablePresentationType                  string = "EnvelopedVerifiablePresentation"
 
-	VerifiableCredentialJsonSchemaType string = "JsonSchema"
+	VerifiableCredentialJSONSchemaType string = "JsonSchema"
 	VerifiableCredentialIDProperty     string = "id"
 )
 

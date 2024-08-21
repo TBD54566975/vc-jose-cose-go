@@ -26,11 +26,11 @@ func (sa *SingleOrArray[T]) UnmarshalJSON(data []byte) error {
 		// Convert []any to []T
 		typedSlice := make([]T, 0, len(value))
 		for _, item := range value {
-			if typedItem, ok := item.(T); ok {
-				typedSlice = append(typedSlice, typedItem)
-			} else {
+			typedItem, ok := item.(T)
+			if !ok {
 				return fmt.Errorf("invalid type in array: %T", item)
 			}
+			typedSlice = append(typedSlice, typedItem)
 		}
 		sa.value = typedSlice
 	default:
