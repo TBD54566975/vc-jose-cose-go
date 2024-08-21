@@ -5,47 +5,30 @@ import (
 	"fmt"
 )
 
-// SingleOrArray is a generic type that can represent either a single value or an array of values
-type SingleOrArray[T any] struct {
-	value any
-}
+// SingleOrArray represents a value that can be either a single item or an array of items
+type SingleOrArray[T any] []T
 
-// UnmarshalJSON implements the json.Unmarshaler interface for SingleOrArray
+// UnmarshalJSON implements custom unmarshaling for SingleOrArray
 func (sa *SingleOrArray[T]) UnmarshalJSON(data []byte) error {
-	var v any
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+	var single T
+	if err := json.Unmarshal(data, &single); err == nil {
+		*sa = SingleOrArray[T]{single}
+		return nil
 	}
 
-	switch value := v.(type) {
-	case T:
-		sa.value = value
-	case []T:
-		sa.value = value
-	case []any:
-		// Convert []any to []T
-		typedSlice := make([]T, 0, len(value))
-		for _, item := range value {
-			typedItem, ok := item.(T)
-			if !ok {
-				return fmt.Errorf("invalid type in array: %T", item)
-			}
-			typedSlice = append(typedSlice, typedItem)
-		}
-		sa.value = typedSlice
-	default:
-		return fmt.Errorf("invalid type: %T", v)
+	var multiple []T
+	if err := json.Unmarshal(data, &multiple); err == nil {
+		*sa = multiple
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("invalid format for SingleOrArray")
 }
 
-// MarshalJSON implements the json.Marshaler interface for SingleOrArray
-func (sa *SingleOrArray[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sa.value)
-}
-
-// Get returns the underlying value (either T or []T)
-func (sa *SingleOrArray[T]) Get() any {
-	return sa.value
+// MarshalJSON implements custom marshaling for SingleOrArray
+func (sa SingleOrArray[T]) MarshalJSON() ([]byte, error) {
+	if len(sa) == 1 {
+		return json.Marshal((sa)[0])
+	}
+	return json.Marshal([]T(sa))
 }
