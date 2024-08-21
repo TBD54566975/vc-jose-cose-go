@@ -1,9 +1,11 @@
-package main
+package credential
 
 import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/TBD54566975/vc-jose-cose-go/util"
 )
 
 const (
@@ -121,7 +123,7 @@ func (v *VerifiableCredential) IsEmpty() bool {
 }
 
 func (v *VerifiableCredential) IsValid() error {
-	return NewValidator().Struct(v)
+	return util.NewValidator().Struct(v)
 }
 
 func (v *VerifiableCredential) IssuerID() string {
@@ -145,5 +147,5 @@ func (v *VerifiablePresentation) IsEmpty() bool {
 }
 
 func (v *VerifiablePresentation) IsValid() error {
-	return NewValidator().Struct(v)
+	return util.NewValidator().Struct(v)
 }
