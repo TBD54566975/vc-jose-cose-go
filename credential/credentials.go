@@ -27,17 +27,17 @@ const (
 // vc-data-model spec https://www.w3.org/TR/vc-data-model-2.0/#verifiable-credentials
 type VerifiableCredential struct {
 	Context SingleOrArray[string] `json:"@context,omitempty" validate:"required"`
-	ID      string                `json:"id,omitempty"`
 	Type    SingleOrArray[string] `json:"type,omitempty" validate:"required"`
+	ID      string                `json:"id,omitempty"`
 	// either a URI or an object containing an `id` property.
 	Issuer *IssuerHolder `json:"issuer,omitempty" validate:"required"`
 	// https://www.w3.org/TR/xmlschema11-2/#dateTimes
-	ValidFrom        string             `json:"validFrom,omitempty" validate:"required"`
-	ValidUntil       string             `json:"validUntil,omitempty"`
-	CredentialStatus SingleOrArray[any] `json:"credentialStatus,omitempty"`
+	ValidFrom  string `json:"validFrom,omitempty" validate:"required"`
+	ValidUntil string `json:"validUntil,omitempty"`
 	// This is where the subject's ID *may* be present
 	CredentialSubject Subject               `json:"credentialSubject,omitempty"`
 	CredentialSchema  SingleOrArray[Schema] `json:"credentialSchema,omitempty"`
+	CredentialStatus  SingleOrArray[any]    `json:"credentialStatus,omitempty"`
 	TermsOfUse        SingleOrArray[any]    `json:"termsOfUse,omitempty"`
 	Evidence          SingleOrArray[any]    `json:"evidence,omitempty"`
 }

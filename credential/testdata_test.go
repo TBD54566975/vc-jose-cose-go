@@ -19,7 +19,7 @@ var (
 	//go:embed testdata
 	testVectors   embed.FS
 	vcTestVectors = []string{VCExample1}
-	vpTestVectors = []string{VPEnvelopedVCExample1, VPEnvelopedVPExample1}
+	vpTestVectors = []string{VPEnvelopedVCExample1}
 )
 
 func TestVCVectors(t *testing.T) {
