@@ -6,7 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/magefile/mage v1.15.0
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/term v0.23.0
+	golang.org/x/term v0.24.0
 )
 
 require (
@@ -16,6 +16,6 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 )
