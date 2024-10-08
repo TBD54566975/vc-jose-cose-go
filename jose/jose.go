@@ -31,19 +31,16 @@ func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) 
 		if !ok || crv == nil {
 			return "", fmt.Errorf("invalid or missing 'crv' parameter")
 		}
-		crvStr, ok := crv.(string)
-		if !ok {
-			return "", fmt.Errorf("'crv' parameter is not a string")
-		}
-		switch crvStr {
-		case jwa.P256.String():
+		crvAlg := crv.(jwa.EllipticCurveAlgorithm)
+		switch crvAlg {
+		case jwa.P256:
 			alg = jwa.ES256
-		case jwa.P384.String():
+		case jwa.P384:
 			alg = jwa.ES384
-		case jwa.P521.String():
+		case jwa.P521:
 			alg = jwa.ES512
 		default:
-			return "", fmt.Errorf("unsupported curve: %s", crvStr)
+			return "", fmt.Errorf("unsupported curve: %s", crvAlg.String())
 		}
 	case jwa.OKP:
 		alg = jwa.EdDSA
@@ -138,19 +135,16 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 		if !ok || crv == nil {
 			return "", fmt.Errorf("invalid or missing 'crv' parameter")
 		}
-		crvStr, ok := crv.(string)
-		if !ok {
-			return "", fmt.Errorf("'crv' parameter is not a string")
-		}
-		switch crvStr {
-		case jwa.P256.String():
+		crvAlg := crv.(jwa.EllipticCurveAlgorithm)
+		switch crvAlg {
+		case jwa.P256:
 			alg = jwa.ES256
-		case jwa.P384.String():
+		case jwa.P384:
 			alg = jwa.ES384
-		case jwa.P521.String():
+		case jwa.P521:
 			alg = jwa.ES512
 		default:
-			return "", fmt.Errorf("unsupported curve: %s", crvStr)
+			return "", fmt.Errorf("unsupported curve: %s", crvAlg.String())
 		}
 	case jwa.OKP:
 		alg = jwa.EdDSA
