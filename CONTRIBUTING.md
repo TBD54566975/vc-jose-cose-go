@@ -15,10 +15,11 @@ This guide is for you.
 
 ___***UPDATE TABLE OF PROJECT DEPS AND INSTALLATION NOTES***___
 
-| Requirement | Tested Version | Installation Instructions                            |
-|-------------|----------------|------------------------------------------------------|
-| Go          | 1.22.6         |[go.dev](https://go.dev/doc/tutorial/compile-install) |
-| Mage        | 1.12.1         |[magefile.org](https://magefile.org/)                 |
+
+| Requirement | Tested Version | Installation Instructions                             |
+| ----------- | -------------- | ----------------------------------------------------- |
+| Go          | 1.23.2         | [go.dev](https://go.dev/doc/tutorial/compile-install) |
+| Mage        | 1.12.1         | [magefile.org](https://magefile.org/)                 |
 
 ### Go
 
@@ -28,7 +29,7 @@ You may verify your `go` installation via the terminal:
 
 ```
 $> go version
-go version go1.22.6 darwin/amd64
+go version go1.23.2 darwin/amd64
 ```
 
 If you do not have go, we recommend installing it by:
@@ -53,10 +54,10 @@ You may verify your `mage` installation via the terminal:
 
 ```
 $> mage --version
-Mage Build Tool 1.12.1
-Build Date: 2021-12-15T21:00:02Z
-Commit: 2f1ec40
-built with: go1.22.6
+Mage Build Tool v1.15.0-5-g2385abb
+Build Date: 2024-08-20T17:26:25-07:00
+Commit: 2385abb
+built with: go1.23.2
 ```
 
 #### MacOS
@@ -70,7 +71,6 @@ $> brew install mage
 #### Linux
 
 Installation instructions are on the [Magefile home page](https://magefile.org/).
-
 
 ## Communications
 
@@ -88,7 +88,6 @@ We advocate an asynchronous, written debate model - so write up your thoughts an
 ### Continuous Integration
 
 Build and Test cycles are run on every commit to every branch on [GitHub Actions](https://github.com/TBD54566975/vc-jose-cose-go/actions).
-
 
 ## Contribution
 
@@ -123,4 +122,3 @@ to your valuable work:
   You're a contributor!
 * And remember to respect everyone in our global development community. Guidelines
   are established in our `CODE_OF_CONDUCT.md`.
-

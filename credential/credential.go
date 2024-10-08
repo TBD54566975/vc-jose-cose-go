@@ -1,9 +1,10 @@
 package credential
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/goccy/go-json"
 
 	"github.com/TBD54566975/vc-jose-cose-go/util"
 )
@@ -16,27 +17,30 @@ const (
 	EnvelopedVerifiableCredentialType                    string = "EnvelopedVerifiableCredential"
 	EnvelopedVerifiablePresentationType                  string = "EnvelopedVerifiablePresentation"
 
-	VerifiableCredentialJsonSchemaType string = "JsonSchema"
+	VerifiableCredentialJSONSchemaType string = "JsonSchema"
 	VerifiableCredentialIDProperty     string = "id"
+
+	VCContentType string = "vc"
+	VPContentType string = "vp"
 )
 
 // VerifiableCredential is the verifiable credential model outlined in the
 // vc-data-model spec https://www.w3.org/TR/vc-data-model-2.0/#verifiable-credentials
 type VerifiableCredential struct {
-	Context SingleOrArray[string] `json:"@context" validate:"required"`
-	ID      string                `json:"id,omitempty"`
-	Type    SingleOrArray[string] `json:"type" validate:"required"`
+	Context util.SingleOrArray[string] `json:"@context,omitempty" validate:"required"`
+	Type    util.SingleOrArray[string] `json:"type,omitempty" validate:"required"`
+	ID      string                     `json:"id,omitempty"`
 	// either a URI or an object containing an `id` property.
-	Issuer IssuerHolder `json:"issuer,omitempty" validate:"required"`
+	Issuer *IssuerHolder `json:"issuer,omitempty" validate:"required"`
 	// https://www.w3.org/TR/xmlschema11-2/#dateTimes
-	ValidFrom        string             `json:"validFrom,omitempty" validate:"required"`
-	ValidUntil       string             `json:"validUntil,omitempty"`
-	CredentialStatus SingleOrArray[any] `json:"credentialStatus,omitempty" validate:"omitempty"`
+	ValidFrom  string `json:"validFrom,omitempty" validate:"required"`
+	ValidUntil string `json:"validUntil,omitempty"`
 	// This is where the subject's ID *may* be present
-	CredentialSubject CredentialSubject               `json:"credentialSubject" validate:"required"`
-	CredentialSchema  SingleOrArray[CredentialSchema] `json:"credentialSchema,omitempty" validate:"omitempty"`
-	TermsOfUse        SingleOrArray[any]              `json:"termsOfUse,omitempty" validate:"omitempty,dive"`
-	Evidence          SingleOrArray[any]              `json:"evidence,omitempty" validate:"omitempty"`
+	CredentialSubject Subject                    `json:"credentialSubject,omitempty"`
+	CredentialSchema  util.SingleOrArray[Schema] `json:"credentialSchema,omitempty"`
+	CredentialStatus  util.SingleOrArray[any]    `json:"credentialStatus,omitempty"`
+	TermsOfUse        util.SingleOrArray[any]    `json:"termsOfUse,omitempty"`
+	Evidence          util.SingleOrArray[any]    `json:"evidence,omitempty"`
 }
 
 // IssuerHolder represents the issuer of a Verifiable Credential or holder of a Verifiable Presentation, which can be
@@ -46,21 +50,21 @@ type IssuerHolder struct {
 	object map[string]any
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface for IssuerHolder
+// UnmarshalJSON implements custom unmarshaling for IssuerHolder
 func (i *IssuerHolder) UnmarshalJSON(data []byte) error {
-	// First, try to unmarshal as a string (URL)
-	var urlString string
-	if err := json.Unmarshal(data, &urlString); err == nil {
-		i.id = urlString
+	// Try to unmarshal as a string
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		i.id = str
 		i.object = nil
 		return nil
 	}
 
-	// If that fails, try to unmarshal as an object
-	obj := make(map[string]any)
+	// If not a string, try to unmarshal as an object
+	var obj map[string]any
 	if err := json.Unmarshal(data, &obj); err == nil {
 		id, ok := obj["id"].(string)
-		if !ok || id == "" {
+		if !ok {
 			return fmt.Errorf("issuer object must contain an 'id' property of type string")
 		}
 		i.id = id
@@ -68,10 +72,20 @@ func (i *IssuerHolder) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return fmt.Errorf("issuer must be either a URL string or an object with an 'id' property")
+	return fmt.Errorf("invalid format for IssuerHolder: must be a string or an object with an 'id' property")
 }
 
-// MarshalJSON implements the json.Marshaler interface for IssuerHolder
+// NewIssuerHolderFromString creates an IssuerHolder from a string (URL or ID)
+func NewIssuerHolderFromString(id string) *IssuerHolder {
+	return &IssuerHolder{id: id}
+}
+
+// NewIssuerHolderFromObject creates an IssuerHolder from an object with an `id` field
+func NewIssuerHolderFromObject(id string, object map[string]any) *IssuerHolder {
+	return &IssuerHolder{id: id, object: object}
+}
+
+// MarshalJSON implements custom marshaling for IssuerHolder
 func (i *IssuerHolder) MarshalJSON() ([]byte, error) {
 	if i.object != nil {
 		return json.Marshal(i.object)
@@ -79,7 +93,7 @@ func (i *IssuerHolder) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.id)
 }
 
-// ID returns the ID of the issuer/holder
+// ID returns the ID of the issuer
 func (i *IssuerHolder) ID() string {
 	return i.id
 }
@@ -89,27 +103,32 @@ func (i *IssuerHolder) IsObject() bool {
 	return i.object != nil
 }
 
+// IsEmpty returns true if the issuer is empty
+func (i *IssuerHolder) IsEmpty() bool {
+	return i.id == "" && i.object == nil
+}
+
 // Get returns the value of a property in the issuer/holder object, or nil if the issuer/holder is a string
 // or the property doesn't exist
-func (i *IssuerHolder) Get(property string) interface{} {
+func (i *IssuerHolder) Get(property string) any {
 	if i.object == nil {
 		return nil
 	}
 	return i.object[property]
 }
 
-// CredentialSubject represents the subject of a Verifiable Credential
-type CredentialSubject map[string]any
+// Subject represents the subject of a Verifiable Credential
+type Subject map[string]any
 
-func (cs CredentialSubject) GetID() string {
+func (s Subject) GetID() string {
 	id := ""
-	if gotID, ok := cs[VerifiableCredentialIDProperty]; ok {
+	if gotID, ok := s[VerifiableCredentialIDProperty]; ok {
 		id = gotID.(string)
 	}
 	return id
 }
 
-type CredentialSchema struct {
+type Schema struct {
 	ID        string `json:"id" validate:"required"`
 	Type      string `json:"type" validate:"required"`
 	DigestSRI string `json:"digestSRI,omitempty"`
@@ -132,11 +151,11 @@ func (v *VerifiableCredential) IssuerID() string {
 
 // VerifiablePresentation https://www.w3.org/TR/vc-data-model-2.0/#verifiable-presentations
 type VerifiablePresentation struct {
-	Context              SingleOrArray[string]  `json:"@context,omitempty"`
-	ID                   string                 `json:"id,omitempty"`
-	Holder               IssuerHolder           `json:"holder,omitempty"`
-	Type                 SingleOrArray[string]  `json:"type" validate:"required"`
-	VerifiableCredential []VerifiableCredential `json:"verifiableCredential,omitempty"`
+	Context              util.SingleOrArray[string] `json:"@context,omitempty" validate:"required"`
+	Type                 util.SingleOrArray[string] `json:"type,omitempty" validate:"required"`
+	ID                   string                     `json:"id,omitempty"`
+	Holder               *IssuerHolder              `json:"holder,omitempty"`
+	VerifiableCredential []VerifiableCredential     `json:"verifiableCredential,omitempty"`
 }
 
 func (v *VerifiablePresentation) IsEmpty() bool {
