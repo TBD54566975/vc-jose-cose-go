@@ -110,7 +110,7 @@ func (i *IssuerHolder) IsEmpty() bool {
 
 // Get returns the value of a property in the issuer/holder object, or nil if the issuer/holder is a string
 // or the property doesn't exist
-func (i *IssuerHolder) Get(property string) interface{} {
+func (i *IssuerHolder) Get(property string) any {
 	if i.object == nil {
 		return nil
 	}
