@@ -1,8 +1,9 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/goccy/go-json"
 )
 
 // SingleOrArray represents a value that can be either a single item or an array of items

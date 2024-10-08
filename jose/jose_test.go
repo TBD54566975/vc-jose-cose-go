@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -25,15 +24,12 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, privKey, err := util.GenerateKeyByEllipticCurveAlgorithm(tt.curve)
-			require.NoError(t, err)
-
-			key, err := jwk.FromRaw(privKey)
+			key, err := util.GenerateJWKWithAlgorithm(tt.curve)
 			require.NoError(t, err)
 
 			vc := &credential.VerifiableCredential{
 				Context:   []string{"https://www.w3.org/2018/credentials/v1"},
-				ID:        "http://example.edu/credentials/1872",
+				ID:        "https://example.edu/credentials/1872",
 				Type:      []string{"VerifiableCredential"},
 				Issuer:    credential.NewIssuerHolderFromString("did:example:issuer"),
 				ValidFrom: "2010-01-01T19:23:24Z",
@@ -50,7 +46,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			verifiedVC, err := VerifyVerifiableCredential(jwt, key)
 			require.NoError(t, err)
 			assert.Equal(t, vc.ID, verifiedVC.ID)
-			assert.Equal(t, vc.Issuer.ID, verifiedVC.Issuer.ID)
+			assert.Equal(t, vc.Issuer.ID(), verifiedVC.Issuer.ID())
 		})
 	}
 }
@@ -68,10 +64,7 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, privKey, err := util.GenerateKeyByEllipticCurveAlgorithm(tt.curve)
-			require.NoError(t, err)
-
-			key, err := jwk.FromRaw(privKey)
+			key, err := util.GenerateJWKWithAlgorithm(tt.curve)
 			require.NoError(t, err)
 
 			vp := credential.VerifiablePresentation{
@@ -89,7 +82,7 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 			verifiedVP, err := VerifyVerifiablePresentation(jwt, key)
 			require.NoError(t, err)
 			assert.Equal(t, vp.ID, verifiedVP.ID)
-			assert.Equal(t, vp.Holder.ID, verifiedVP.Holder.ID)
+			assert.Equal(t, vp.Holder.ID(), verifiedVP.Holder.ID())
 		})
 	}
 }

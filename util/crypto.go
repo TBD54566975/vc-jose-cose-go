@@ -12,6 +12,7 @@ import (
 	"reflect"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/pkg/errors"
 
 	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -37,6 +38,42 @@ const (
 	P384           KeyType = "P-384"
 	P521           KeyType = "P-521"
 )
+
+func GenerateJWKWithAlgorithm(eca jwa.EllipticCurveAlgorithm) (jwk.Key, error) {
+	// Generate the key pair
+	_, privKey, err := GenerateKeyByEllipticCurveAlgorithm(eca)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate key: %w", err)
+	}
+
+	// Convert the private key to JWK
+	jwkKey, err := jwk.FromRaw(privKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert key to JWK: %w", err)
+	}
+
+	// Set the algorithm based on the elliptic curve algorithm
+	var alg jwa.SignatureAlgorithm
+	switch eca {
+	case jwa.P256:
+		alg = jwa.ES256
+	case jwa.P384:
+		alg = jwa.ES384
+	case jwa.P521:
+		alg = jwa.ES512
+	case jwa.Ed25519:
+		alg = jwa.EdDSA
+	default:
+		return nil, fmt.Errorf("unsupported elliptic curve algorithm: %s", eca)
+	}
+
+	// Set the algorithm in the JWK
+	if err = jwkKey.Set(jwk.AlgorithmKey, alg); err != nil {
+		return nil, fmt.Errorf("failed to set algorithm in JWK: %w", err)
+	}
+
+	return jwkKey, nil
+}
 
 // GenerateKeyByEllipticCurveAlgorithm creates a brand-new key, returning the public and private key for the given elliptic curve algorithm
 func GenerateKeyByEllipticCurveAlgorithm(eca jwa.EllipticCurveAlgorithm) (crypto.PublicKey, crypto.PrivateKey, error) {

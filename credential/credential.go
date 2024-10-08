@@ -1,9 +1,10 @@
 package credential
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/goccy/go-json"
 
 	"github.com/TBD54566975/vc-jose-cose-go/util"
 )
@@ -100,6 +101,11 @@ func (i *IssuerHolder) ID() string {
 // IsObject returns true if the issuer is an object, false if it's a string
 func (i *IssuerHolder) IsObject() bool {
 	return i.object != nil
+}
+
+// IsEmpty returns true if the issuer is empty
+func (i *IssuerHolder) IsEmpty() bool {
+	return i.id == "" && i.object == nil
 }
 
 // Get returns the value of a property in the issuer/holder object, or nil if the issuer/holder is a string

@@ -2,8 +2,9 @@ package credential
 
 import (
 	"embed"
-	"encoding/json"
 	"testing"
+
+	"github.com/goccy/go-json"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ var (
 	//go:embed testdata
 	testVectors   embed.FS
 	vcTestVectors = []string{VCExample1}
-	vpTestVectors = []string{VPEnvelopedVCExample1}
+	vpTestVectors = []string{VPEnvelopedVCExample1, VPEnvelopedVPExample1}
 )
 
 func TestVCVectors(t *testing.T) {

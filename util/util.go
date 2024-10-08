@@ -1,10 +1,11 @@
 package util
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/goccy/go-json"
 
 	"github.com/go-playground/validator/v10"
 )

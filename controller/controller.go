@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	TypeJsonWebKey string = "JsonWebKey"
+	TypeJSONWebKey string = "JsonWebKey"
 	TypeMultikey   string = "Multikey"
 )
 
