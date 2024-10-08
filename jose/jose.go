@@ -20,25 +20,8 @@ const (
 	VCJWTKid   = "kid"
 )
 
-// VerifyVerifiableCredentialJOSE verifies a VerifiableCredential JWT using the provided key.
-func VerifyVerifiableCredentialJOSE(jwt string, key jwk.Key) (*credential.VerifiableCredential, error) {
-	// Verify the JWT signature and get the payload
-	payload, err := jws.Verify([]byte(jwt), jws.WithKey(key.Algorithm(), key))
-	if err != nil {
-		return nil, fmt.Errorf("invalid JWT signature: %w", err)
-	}
-
-	// Unmarshal the payload into VerifiableCredential
-	var vc credential.VerifiableCredential
-	if err := json.Unmarshal(payload, &vc); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal VerifiableCredential: %w", err)
-	}
-
-	return &vc, nil
-}
-
-// SignJOSE dynamically signs a VerifiableCredential based on the key type.
-func SignVerifiableCredentialJOSE(vc *credential.VerifiableCredential, key jwk.Key) (string, error) {
+// SignVerifiableCredential dynamically signs a VerifiableCredential based on the key type.
+func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) (string, error) {
 	var alg jwa.SignatureAlgorithm
 
 	kty := key.KeyType()
@@ -69,6 +52,23 @@ func SignVerifiableCredentialJOSE(vc *credential.VerifiableCredential, key jwk.K
 	}
 
 	return signVerifiableCredential(vc, key, alg)
+}
+
+// VerifyVerifiableCredential verifies a VerifiableCredential JWT using the provided key.
+func VerifyVerifiableCredential(jwt string, key jwk.Key) (*credential.VerifiableCredential, error) {
+	// Verify the JWT signature and get the payload
+	payload, err := jws.Verify([]byte(jwt), jws.WithKey(key.Algorithm(), key))
+	if err != nil {
+		return nil, fmt.Errorf("invalid JWT signature: %w", err)
+	}
+
+	// Unmarshal the payload into VerifiableCredential
+	var vc credential.VerifiableCredential
+	if err := json.Unmarshal(payload, &vc); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal VerifiableCredential: %w", err)
+	}
+
+	return &vc, nil
 }
 
 // SignVerifiableCredential dynamically signs a VerifiableCredential using the specified algorithm,
@@ -128,7 +128,7 @@ func signVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key, 
 }
 
 // SignJOSE dynamically signs a VerifiablePresentation based on the key type.
-func SignVerifiablePresentationJOSE(vp credential.VerifiablePresentation, key jwk.Key) (string, error) {
+func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (string, error) {
 	var alg jwa.SignatureAlgorithm
 
 	kty := key.KeyType()

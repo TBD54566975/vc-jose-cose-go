@@ -74,6 +74,16 @@ func (i *IssuerHolder) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("invalid format for IssuerHolder: must be a string or an object with an 'id' property")
 }
 
+// NewIssuerHolderFromString creates an IssuerHolder from a string (URL or ID)
+func NewIssuerHolderFromString(id string) *IssuerHolder {
+	return &IssuerHolder{id: id}
+}
+
+// NewIssuerHolderFromObject creates an IssuerHolder from an object with an `id` field
+func NewIssuerHolderFromObject(id string, object map[string]any) *IssuerHolder {
+	return &IssuerHolder{id: id, object: object}
+}
+
 // MarshalJSON implements custom marshaling for IssuerHolder
 func (i *IssuerHolder) MarshalJSON() ([]byte, error) {
 	if i.object != nil {
