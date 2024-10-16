@@ -1,6 +1,7 @@
 package jose
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,15 +23,19 @@ const (
 )
 
 // SignVerifiableCredential dynamically signs a VerifiableCredential based on the key type.
-func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) (string, error) {
+func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (*string, error) {
+	if vc.IsEmpty() {
+		return nil, errors.New("VerifiableCredential is empty")
+	}
+
 	// Marshal the VerifiableCredential to a map
 	vcMap := make(map[string]any)
 	vcBytes, err := json.Marshal(vc)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if err = json.Unmarshal(vcBytes, &vcMap); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Add standard claims
@@ -50,7 +55,7 @@ func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) 
 	// Marshal the claims to JSON
 	payload, err := json.Marshal(vcMap)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Add protected header values
@@ -63,17 +68,18 @@ func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) 
 	}
 	for k, v := range headers {
 		if err = jwsHeaders.Set(k, v); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
 	// Sign the payload
 	signed, err := jws.Sign(payload, jws.WithKey(key.Algorithm(), key, jws.WithProtectedHeaders(jwsHeaders)))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(signed), nil
+	result := string(signed)
+	return &result, nil
 }
 
 // VerifyVerifiableCredential verifies a VerifiableCredential JWT using the provided key.
