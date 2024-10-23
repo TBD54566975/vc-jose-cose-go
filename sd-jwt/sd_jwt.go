@@ -18,6 +18,7 @@ import (
 
 const (
 	VCSDJWTType = "vc+sd-jwt"
+	VPSDJWTType = "vp+sd-jwt"
 )
 
 // DisclosurePath represents a path to a field that should be made selectively disclosable
@@ -246,8 +247,7 @@ func VerifyVerifiableCredential(sdJwtStr string, key jwk.Key) (*credential.Verif
 		return nil, errors.New("invalid JWT format")
 	}
 
-	signedData := []byte(fmt.Sprintf("%s.%s.%s", jwsParts[0], jwsParts[1], jwsParts[2]))
-	if _, err = jws.Verify(signedData, jws.WithKey(key.Algorithm(), key)); err != nil {
+	if _, err = jws.Verify([]byte(parts[0]), jws.WithKey(key.Algorithm(), key)); err != nil {
 		return nil, fmt.Errorf("invalid JWT signature: %w", err)
 	}
 
