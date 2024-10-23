@@ -24,7 +24,12 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (
 	if vc.IsEmpty() {
 		return nil, errors.New("VerifiableCredential is empty")
 	}
-
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
 	// Convert VC to a map
 	vcMap, err := vc.ToMap()
 	if err != nil {
@@ -95,6 +100,12 @@ func VerifyVerifiableCredential(jwt string, key jwk.Key) (*credential.Verifiable
 // SignVerifiablePresentation dynamically signs a VerifiablePresentation based on the key type.
 func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (string, error) {
 	var alg jwa.SignatureAlgorithm
+	if key.KeyID() == "" {
+		return "", errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return "", errors.New("key algorithm is required")
+	}
 
 	kty := key.KeyType()
 	switch kty {

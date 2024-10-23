@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"reflect"
 
@@ -67,6 +68,14 @@ func GenerateJWKWithAlgorithm(eca jwa.EllipticCurveAlgorithm) (jwk.Key, error) {
 		return nil, fmt.Errorf("unsupported elliptic curve algorithm: %s", eca)
 	}
 
+	thumbprintBytes, err := jwkKey.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute thumbprint: %w", err)
+	}
+	thumbprint := base64.RawURLEncoding.EncodeToString(thumbprintBytes)
+	if err = jwkKey.Set(jwk.KeyIDKey, thumbprint); err != nil {
+		return nil, fmt.Errorf("failed to set key ID in JWK: %w", err)
+	}
 	// Set the algorithm in the JWK
 	if err = jwkKey.Set(jwk.AlgorithmKey, alg); err != nil {
 		return nil, fmt.Errorf("failed to set algorithm in JWK: %w", err)

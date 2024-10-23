@@ -34,6 +34,12 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, disclosurePath
 	if vc.IsEmpty() {
 		return nil, errors.New("VerifiableCredential is empty")
 	}
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
 
 	// Convert VC to a map for manipulation
 	vcMap, err := vc.ToMap()
@@ -252,4 +258,118 @@ func VerifyVerifiableCredential(sdJwtStr string, key jwk.Key) (*credential.Verif
 	}
 
 	return &vc, nil
+}
+
+// SignVerifiablePresentation creates an SD-JWT from a VerifiablePresentation, making specified fields
+// selectively disclosable according to the provided paths.
+func SignVerifiablePresentation(vp credential.VerifiablePresentation, disclosurePaths []DisclosurePath, key jwk.Key) (*string, error) {
+	if vp.IsEmpty() {
+		return nil, errors.New("VerifiablePresentation is empty")
+	}
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
+
+	// Convert VP to a map for manipulation
+	vpMap, err := vp.ToMap()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert VP to map: %w", err)
+	}
+
+	// Add standard claims
+	if vp.ID != "" {
+		vpMap["jti"] = vp.ID
+	}
+	if !vp.Holder.IsEmpty() {
+		vpMap["iss"] = vp.Holder.ID()
+	}
+
+	// Process disclosures
+	disclosures := make([]disclosure.Disclosure, 0, len(disclosurePaths))
+	processedMap, err := processDisclosures(vpMap, disclosurePaths, &disclosures)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process disclosures: %w", err)
+	}
+	vpMap = processedMap
+
+	// Marshal the claims to JSON
+	payload, err := json.Marshal(vpMap)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add protected header values
+	jwsHeaders := jws.NewHeaders()
+	headers := map[string]string{
+		"typ": VPSDJWTType,
+		"cty": credential.VPContentType,
+		"alg": key.Algorithm().String(),
+		"kid": key.KeyID(),
+	}
+	for k, v := range headers {
+		if err = jwsHeaders.Set(k, v); err != nil {
+			return nil, err
+		}
+	}
+
+	// Sign the JWS with the holder's key
+	signed, err := jws.Sign(payload, jws.WithKey(key.Algorithm(), key, jws.WithProtectedHeaders(jwsHeaders)))
+	if err != nil {
+		return nil, err
+	}
+
+	// Combine JWT with disclosures
+	sdJWTParts := []string{(string)(signed)}
+	for _, d := range disclosures {
+		sdJWTParts = append(sdJWTParts, d.EncodedValue)
+	}
+
+	sdJwt := fmt.Sprintf("%s~", strings.Join(sdJWTParts, "~"))
+	return &sdJwt, nil
+}
+
+// VerifyVerifiablePresentation verifies an SD-JWT presentation and returns the disclosed claims
+func VerifyVerifiablePresentation(sdJwtStr string, key jwk.Key) (*credential.VerifiablePresentation, error) {
+	// Parse and verify the SD-JWT
+	sdJwt, err := sdjwt.New(sdJwtStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse SD-JWT: %w", err)
+	}
+
+	// Get disclosed claims
+	claims, err := sdJwt.GetDisclosedClaims()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get disclosed claims: %w", err)
+	}
+
+	// Convert claims back to VerifiablePresentation
+	vpBytes, err := json.Marshal(claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal claims: %w", err)
+	}
+
+	var vp credential.VerifiablePresentation
+	if err = json.Unmarshal(vpBytes, &vp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal VP: %w", err)
+	}
+
+	// Extract signature from SD-JWT
+	parts := strings.Split(sdJwtStr, "~")
+	if len(parts) < 1 {
+		return nil, errors.New("invalid SD-JWT format")
+	}
+
+	jwsParts := strings.Split(parts[0], ".")
+	if len(jwsParts) != 3 {
+		return nil, errors.New("invalid JWT format")
+	}
+
+	if _, err = jws.Verify([]byte(parts[0]), jws.WithKey(key.Algorithm(), key)); err != nil {
+		return nil, fmt.Errorf("invalid JWT signature: %w", err)
+	}
+
+	return &vp, nil
 }

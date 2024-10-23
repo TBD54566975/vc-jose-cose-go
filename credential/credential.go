@@ -173,6 +173,21 @@ type VerifiablePresentation struct {
 	VerifiableCredential []VerifiableCredential     `json:"verifiableCredential,omitempty"`
 }
 
+// ToMap converts the VerifiablePresentation to a map[string]any
+func (vp *VerifiablePresentation) ToMap() (map[string]any, error) {
+	jsonBytes, err := json.Marshal(vp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal VerifiablePresentation: %w", err)
+	}
+
+	var result map[string]any
+	if err = json.Unmarshal(jsonBytes, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal VerifiablePresentation to map: %w", err)
+	}
+
+	return result, nil
+}
+
 func (v *VerifiablePresentation) IsEmpty() bool {
 	if v == nil {
 		return true
