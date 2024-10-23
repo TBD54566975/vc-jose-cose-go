@@ -27,7 +27,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			key, err := util.GenerateJWKWithAlgorithm(tt.curve)
 			require.NoError(t, err)
 
-			vc := &credential.VerifiableCredential{
+			vc := credential.VerifiableCredential{
 				Context:   []string{"https://www.w3.org/2018/credentials/v1"},
 				ID:        "https://example.edu/credentials/1872",
 				Type:      []string{"VerifiableCredential"},
@@ -43,7 +43,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			assert.NotEmpty(t, jwt)
 
 			// Verify the VC
-			verifiedVC, err := VerifyVerifiableCredential(jwt, key)
+			verifiedVC, err := VerifyVerifiableCredential(*jwt, key)
 			require.NoError(t, err)
 			assert.Equal(t, vc.ID, verifiedVC.ID)
 			assert.Equal(t, vc.Issuer.ID(), verifiedVC.Issuer.ID())

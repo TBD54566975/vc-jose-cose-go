@@ -1,6 +1,7 @@
 package jose
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,21 +17,23 @@ import (
 const (
 	VCJOSEType = "vc+jwt"
 	VPJOSEType = "vp+jwt"
-	VCJWTTyp   = "JWT"
-	VCJWTAlg   = "alg"
-	VCJWTKid   = "kid"
 )
 
 // SignVerifiableCredential dynamically signs a VerifiableCredential based on the key type.
-func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) (string, error) {
-	// Marshal the VerifiableCredential to a map
-	vcMap := make(map[string]any)
-	vcBytes, err := json.Marshal(vc)
-	if err != nil {
-		return "", err
+func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (*string, error) {
+	if vc.IsEmpty() {
+		return nil, errors.New("VerifiableCredential is empty")
 	}
-	if err = json.Unmarshal(vcBytes, &vcMap); err != nil {
-		return "", err
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
+	// Convert VC to a map
+	vcMap, err := vc.ToMap()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert VC to map: %w", err)
 	}
 
 	// Add standard claims
@@ -50,30 +53,31 @@ func SignVerifiableCredential(vc *credential.VerifiableCredential, key jwk.Key) 
 	// Marshal the claims to JSON
 	payload, err := json.Marshal(vcMap)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Add protected header values
 	jwsHeaders := jws.NewHeaders()
 	headers := map[string]string{
-		"typ": VPJOSEType,
-		"cty": credential.VPContentType,
+		"typ": VCJOSEType,
+		"cty": credential.VCContentType,
 		"alg": key.Algorithm().String(),
 		"kid": key.KeyID(),
 	}
 	for k, v := range headers {
 		if err = jwsHeaders.Set(k, v); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
 	// Sign the payload
 	signed, err := jws.Sign(payload, jws.WithKey(key.Algorithm(), key, jws.WithProtectedHeaders(jwsHeaders)))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(signed), nil
+	result := string(signed)
+	return &result, nil
 }
 
 // VerifyVerifiableCredential verifies a VerifiableCredential JWT using the provided key.
@@ -96,6 +100,12 @@ func VerifyVerifiableCredential(jwt string, key jwk.Key) (*credential.Verifiable
 // SignVerifiablePresentation dynamically signs a VerifiablePresentation based on the key type.
 func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (string, error) {
 	var alg jwa.SignatureAlgorithm
+	if key.KeyID() == "" {
+		return "", errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return "", errors.New("key algorithm is required")
+	}
 
 	kty := key.KeyType()
 	switch kty {
