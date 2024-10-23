@@ -17,9 +17,6 @@ import (
 const (
 	VCJOSEType = "vc+jwt"
 	VPJOSEType = "vp+jwt"
-	VCJWTTyp   = "JWT"
-	VCJWTAlg   = "alg"
-	VCJWTKid   = "kid"
 )
 
 // SignVerifiableCredential dynamically signs a VerifiableCredential based on the key type.
@@ -28,14 +25,10 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (
 		return nil, errors.New("VerifiableCredential is empty")
 	}
 
-	// Marshal the VerifiableCredential to a map
-	vcMap := make(map[string]any)
-	vcBytes, err := json.Marshal(vc)
+	// Convert VC to a map
+	vcMap, err := vc.ToMap()
 	if err != nil {
-		return nil, err
-	}
-	if err = json.Unmarshal(vcBytes, &vcMap); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert VC to map: %w", err)
 	}
 
 	// Add standard claims
@@ -61,8 +54,8 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (
 	// Add protected header values
 	jwsHeaders := jws.NewHeaders()
 	headers := map[string]string{
-		"typ": VPJOSEType,
-		"cty": credential.VPContentType,
+		"typ": VCJOSEType,
+		"cty": credential.VCContentType,
 		"alg": key.Algorithm().String(),
 		"kid": key.KeyID(),
 	}

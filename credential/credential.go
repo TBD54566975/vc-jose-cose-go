@@ -43,6 +43,21 @@ type VerifiableCredential struct {
 	Evidence          util.SingleOrArray[any]    `json:"evidence,omitempty"`
 }
 
+// ToMap converts the VerifiableCredential to a map[string]any
+func (vc *VerifiableCredential) ToMap() (map[string]any, error) {
+	jsonBytes, err := json.Marshal(vc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal VerifiableCredential: %w", err)
+	}
+
+	var result map[string]any
+	if err = json.Unmarshal(jsonBytes, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal VerifiableCredential to map: %w", err)
+	}
+
+	return result, nil
+}
+
 // IssuerHolder represents the issuer of a Verifiable Credential or holder of a Verifiable Presentation, which can be
 // either a URL string or an object containing an ID property
 type IssuerHolder struct {
