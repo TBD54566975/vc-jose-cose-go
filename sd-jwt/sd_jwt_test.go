@@ -12,11 +12,42 @@ import (
 )
 
 func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
+	simpleVC := credential.VerifiableCredential{
+		Context:   []string{"https://www.w3.org/2018/credentials/v1"},
+		ID:        "https://example.edu/credentials/1872",
+		Type:      []string{"VerifiableCredential"},
+		Issuer:    credential.NewIssuerHolderFromString("did:example:issuer"),
+		ValidFrom: "2010-01-01T19:23:24Z",
+		CredentialSubject: map[string]any{
+			"id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+		},
+	}
+
+	detailVC := credential.VerifiableCredential{
+		Context:   []string{"https://www.w3.org/2018/credentials/v1"},
+		ID:        "https://example.edu/credentials/1872",
+		Type:      []string{"VerifiableCredential"},
+		Issuer:    credential.NewIssuerHolderFromString("did:example:issuer"),
+		ValidFrom: "2010-01-01T19:23:24Z",
+		CredentialSubject: map[string]any{
+			"id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+			"address": map[string]any{
+				"streetAddress": "123 Main St",
+				"city":          "Anytown",
+				"country":       "US",
+			},
+			"details": []any{
+				"Detail 1",
+				"Detail 2",
+			},
+		},
+	}
+
 	tests := []struct {
 		name            string
 		curve           jwa.EllipticCurveAlgorithm
 		disclosurePaths []DisclosurePath
-		vc              credential.VerifiableCredential
+		vc              *credential.VerifiableCredential
 		verifyFields    func(*testing.T, *credential.VerifiableCredential)
 	}{
 		{
@@ -25,16 +56,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			disclosurePaths: []DisclosurePath{
 				"credentialSubject.id",
 			},
-			vc: credential.VerifiableCredential{
-				Context:   []string{"https://www.w3.org/2018/credentials/v1"},
-				ID:        "https://example.edu/credentials/1872",
-				Type:      []string{"VerifiableCredential"},
-				Issuer:    credential.NewIssuerHolderFromString("did:example:issuer"),
-				ValidFrom: "2010-01-01T19:23:24Z",
-				CredentialSubject: map[string]any{
-					"id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-				},
-			},
+			vc: &simpleVC,
 			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
 				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
 			},
@@ -47,25 +69,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 				"credentialSubject.address.streetAddress",
 				"credentialSubject.details[0]",
 			},
-			vc: credential.VerifiableCredential{
-				Context:   []string{"https://www.w3.org/2018/credentials/v1"},
-				ID:        "https://example.edu/credentials/1872",
-				Type:      []string{"VerifiableCredential"},
-				Issuer:    credential.NewIssuerHolderFromString("did:example:issuer"),
-				ValidFrom: "2010-01-01T19:23:24Z",
-				CredentialSubject: map[string]any{
-					"id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-					"address": map[string]any{
-						"streetAddress": "123 Main St",
-						"city":          "Anytown",
-						"country":       "US",
-					},
-					"details": []any{
-						"Detail 1",
-						"Detail 2",
-					},
-				},
-			},
+			vc: &detailVC,
 			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
 				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
 				address := vc.CredentialSubject["address"].(map[string]any)
@@ -83,16 +87,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 				"validFrom",
 				"credentialSubject.id",
 			},
-			vc: credential.VerifiableCredential{
-				Context:   []string{"https://www.w3.org/2018/credentials/v1"},
-				ID:        "https://example.edu/credentials/1872",
-				Type:      []string{"VerifiableCredential"},
-				Issuer:    credential.NewIssuerHolderFromString("did:example:issuer"),
-				ValidFrom: "2010-01-01T19:23:24Z",
-				CredentialSubject: map[string]any{
-					"id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-				},
-			},
+			vc: &simpleVC,
 			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
 				assert.Equal(t, "https://example.edu/credentials/1872", vc.ID)
 				assert.Equal(t, "2010-01-01T19:23:24Z", vc.ValidFrom)
@@ -108,7 +103,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			require.NoError(t, err)
 
 			// Sign the credential
-			sdJwt, err := SignVerifiableCredential(tt.vc, tt.disclosurePaths, issuerKey)
+			sdJwt, err := SignVerifiableCredential(*tt.vc, tt.disclosurePaths, issuerKey)
 			require.NoError(t, err)
 			require.NotNil(t, sdJwt)
 
@@ -132,8 +127,6 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			require.NoError(t, err)
 			_, err = VerifyVerifiableCredential(*sdJwt, wrongKey)
 			assert.Error(t, err)
-
-			println(*sdJwt)
 		})
 	}
 }
