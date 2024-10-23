@@ -13,20 +13,75 @@ import (
 
 func Test_Sign_Verify_VerifiableCredential_SDJWT(t *testing.T) {
 	tests := []struct {
-		name  string
-		curve jwa.EllipticCurveAlgorithm
+		name            string
+		curve           jwa.EllipticCurveAlgorithm
+		disclosurePaths []DisclosurePath
+		vcModifier      func(*credential.VerifiableCredential)
+		verifyFields    func(*testing.T, *credential.VerifiableCredential)
 	}{
-		{"EC P-256", jwa.P256},
-		// {"EC P-384", jwa.P384},
-		// {"EC P-521", jwa.P521},
-		// {"OKP EdDSA", jwa.Ed25519},
+		{
+			name:  "EC P-256 with simple credential subject disclosure",
+			curve: jwa.P256,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+			},
+			vcModifier: nil,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
+		{
+			name:  "EC P-256 with complex nested disclosures",
+			curve: jwa.P256,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+				"credentialSubject.address.streetAddress",
+				"credentialSubject.details[0]",
+			},
+			vcModifier: func(vc *credential.VerifiableCredential) {
+				vc.CredentialSubject["address"] = map[string]any{
+					"streetAddress": "123 Main St",
+					"city":          "Anytown",
+					"country":       "US",
+				}
+				vc.CredentialSubject["details"] = []any{
+					"Detail 1",
+					"Detail 2",
+				}
+			},
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+				address := vc.CredentialSubject["address"].(map[string]any)
+				assert.Equal(t, "123 Main St", address["streetAddress"])
+				assert.Equal(t, "Anytown", address["city"])
+				details := vc.CredentialSubject["details"].([]any)
+				assert.Equal(t, "Detail 1", details[0])
+			},
+		},
+		{
+			name:  "EC P-256 with top level disclosures",
+			curve: jwa.P256,
+			disclosurePaths: []DisclosurePath{
+				"id",
+				"validFrom",
+				"credentialSubject.id",
+			},
+			vcModifier: nil,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "https://example.edu/credentials/1872", vc.ID)
+				assert.Equal(t, "2010-01-01T19:23:24Z", vc.ValidFrom)
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			// Generate issuer key
+			issuerKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
 			require.NoError(t, err)
 
+			// Create base VC
 			vc := &credential.VerifiableCredential{
 				Context:   []string{"https://www.w3.org/2018/credentials/v1"},
 				ID:        "https://example.edu/credentials/1872",
@@ -37,30 +92,37 @@ func Test_Sign_Verify_VerifiableCredential_SDJWT(t *testing.T) {
 					"id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
 				},
 			}
-			disclosableFields := []string{"id"}
 
-			sdJWT, err := SignVerifiableCredential(*vc, key, disclosableFields)
+			// Apply any test-specific modifications
+			if tt.vcModifier != nil {
+				tt.vcModifier(vc)
+			}
+
+			// Sign the credential
+			sdJwt, err := SignVerifiableCredential(*vc, tt.disclosurePaths, issuerKey)
 			require.NoError(t, err)
-			require.NotNil(t, sdJWT)
+			require.NotNil(t, sdJwt)
 
-			// Verify the SD-JWT
-			parsedVC, disclosedClaims, err := VerifyVerifiableCredential(*sdJWT, key)
+			// Verify the credential
+			verifiedVC, err := VerifyVerifiableCredential(*sdJwt, issuerKey)
 			require.NoError(t, err)
-			require.NotEmpty(t, parsedVC)
-			require.NotEmpty(t, disclosedClaims)
+			require.NotNil(t, verifiedVC)
 
-			// Check if the parsed VC matches the original
-			assert.Equal(t, vc.Context, parsedVC.Context)
-			assert.Equal(t, vc.ID, parsedVC.ID)
-			assert.Equal(t, vc.Type, parsedVC.Type)
-			assert.Equal(t, vc.Issuer, parsedVC.Issuer)
-			assert.Equal(t, vc.ValidFrom, parsedVC.ValidFrom)
+			// Verify standard fields
+			assert.Equal(t, vc.Context, verifiedVC.Context)
+			assert.Equal(t, vc.Type, verifiedVC.Type)
+			assert.Equal(t, vc.Issuer, verifiedVC.Issuer)
 
-			// Check if the disclosable field was correctly disclosed
-			// assert.Contains(t, disclosedClaims, "credentialSubject")
-			// subjectClaims, ok := disclosedClaims["credentialSubject"].(map[string]interface{})
-			// require.True(t, ok)
-			// assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", subjectClaims["id"])
+			// Apply any test-specific verification
+			if tt.verifyFields != nil {
+				tt.verifyFields(t, verifiedVC)
+			}
+
+			// Verify validation fails with wrong key
+			wrongKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			require.NoError(t, err)
+			_, err = VerifyVerifiableCredential(*sdJwt, wrongKey)
+			assert.Error(t, err)
 		})
 	}
 }

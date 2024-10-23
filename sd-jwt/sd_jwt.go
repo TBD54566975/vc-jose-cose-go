@@ -1,9 +1,12 @@
 package sdjwt
 
 import (
+	"crypto"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	sdjwt "github.com/MichaelFraser99/go-sd-jwt"
 	"github.com/MichaelFraser99/go-sd-jwt/disclosure"
@@ -11,23 +14,27 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jws"
 
 	"github.com/TBD54566975/vc-jose-cose-go/credential"
-	"github.com/TBD54566975/vc-jose-cose-go/jose"
 )
 
 const (
 	VCSDJWTType = "vc+sd-jwt"
-	VPSDJWTType = "vp+sd-jwt"
 )
 
-type DisclosedClaims map[string]any
+// DisclosurePath represents a path to a field that should be made selectively disclosable
+// Example paths:
+// - "credentialSubject.id"
+// - "credentialSubject.address.streetAddress"
+// - "credentialSubject.nationalities[0]" for array element
+type DisclosurePath string
 
-// SignVerifiableCredential signs a VerifiableCredential using SD-JWT.
-func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key, disclosableFields []string) (*string, error) {
+// SignVerifiableCredential creates an SD-JWT from a VerifiableCredential, making specified fields
+// selectively disclosable according to the provided paths.
+func SignVerifiableCredential(vc credential.VerifiableCredential, disclosurePaths []DisclosurePath, key jwk.Key) (*string, error) {
 	if vc.IsEmpty() {
 		return nil, errors.New("VerifiableCredential is empty")
 	}
 
-	// Convert VC to a map
+	// Convert VC to a map for manipulation
 	vcMap, err := vc.ToMap()
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert VC to map: %w", err)
@@ -46,6 +53,14 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key, d
 	if vc.ValidUntil != "" {
 		vcMap["exp"] = vc.ValidUntil
 	}
+
+	// Process disclosures
+	disclosures := make([]disclosure.Disclosure, 0, len(disclosurePaths))
+	processedMap, err := processDisclosures(vcMap, disclosurePaths, &disclosures)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process disclosures: %w", err)
+	}
+	vcMap = processedMap
 
 	// Marshal the claims to JSON
 	payload, err := json.Marshal(vcMap)
@@ -67,157 +82,174 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key, d
 		}
 	}
 
-	// Create disclosures for the specified fields
-	disclosures := make([]disclosure.Disclosure, 0)
-	for _, field := range disclosableFields {
-		value, ok := vcMap[field]
-		if !ok {
-			continue // Skip if field doesn't exist
-		}
-		disc, err := disclosure.NewFromObject(field, value, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create disclosure for %s: %w", field, err)
-		}
-		disclosures = append(disclosures, *disc)
-	}
-
-	// Sign the payload as a JWS
+	// Sign the JWS issuer key
 	signed, err := jws.Sign(payload, jws.WithKey(key.Algorithm(), key, jws.WithProtectedHeaders(jwsHeaders)))
 	if err != nil {
 		return nil, err
 	}
 
-	// Create SD-JWT with disclosures
-	sdJWT, err := sdjwt.NewFromComponents(parsedJWT.Protected, parsedJWT.Payload, parsedJWT.Signature, disclosuresToStrings(disclosures), nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create SD-JWT from JWT: %w", err)
+	// Combine JWT with disclosures
+	sdJWTParts := []string{(string)(signed)}
+	for _, d := range disclosures {
+		sdJWTParts = append(sdJWTParts, d.EncodedValue)
 	}
 
-	// Create disclosures for the specified fields
-	for _, field := range disclosableFields {
-		value, ok := vcMap[field]
-		if !ok {
-			continue // Skip if field doesn't exist
+	sdJwt := fmt.Sprintf("%s~", strings.Join(sdJWTParts, "~"))
+	return &sdJwt, nil
+}
+
+// processDisclosures traverses the credential map and creates disclosures for specified paths
+func processDisclosures(data map[string]any, paths []DisclosurePath, disclosures *[]disclosure.Disclosure) (map[string]any, error) {
+	result := make(map[string]any)
+	for k, v := range data {
+		result[k] = v
+	}
+	for _, path := range paths {
+		parts := strings.Split(string(path), ".")
+		if err := processPath(result, parts, disclosures); err != nil {
+			return nil, fmt.Errorf("failed to process path %s: %w", path, err)
 		}
-		disc, err := disclosure.NewFromObject(field, value, nil)
+	}
+	return result, nil
+}
+
+// processPath handles a single disclosure path
+func processPath(data map[string]any, pathParts []string, disclosures *[]disclosure.Disclosure) error {
+	if len(pathParts) == 0 {
+		return nil
+	}
+
+	// Split path part into field name and optional array index
+	parts := strings.SplitN(pathParts[0], "[", 2)
+	field := parts[0]
+	arrayIndex := -1
+
+	// Check if we have an array index
+	if len(parts) == 2 {
+		// Remove trailing ']'
+		indexStr := strings.TrimSuffix(parts[1], "]")
+		var err error
+		arrayIndex, err = strconv.Atoi(indexStr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create disclosure for %s: %w", field, err)
+			return fmt.Errorf("invalid array index '%s' in path: %s", indexStr, pathParts[0])
 		}
-		sdJWT.Disclosures = append(sdJWT.Disclosures, *disc)
 	}
 
-	// Generate the final SD-JWT token
-	token, err := sdJWT.Token()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate SD-JWT token: %w", err)
+	value, exists := data[field]
+	if !exists {
+		return fmt.Errorf("field not found: %s", field)
 	}
 
-	return token, nil
+	// If this is the last path part, create the disclosure
+	if len(pathParts) == 1 {
+		if arrayIndex >= 0 {
+			arr, ok := value.([]any)
+			if !ok {
+				return fmt.Errorf("field %s is not an array", field)
+			}
+			if arrayIndex >= len(arr) {
+				return fmt.Errorf("array index %d out of bounds for field %s", arrayIndex, field)
+			}
+			// Create disclosure for array element
+			d, err := disclosure.NewFromArrayElement(arr[arrayIndex], nil)
+			if err != nil {
+				return err
+			}
+			*disclosures = append(*disclosures, *d)
+
+			// Replace with digest
+			arr[arrayIndex] = map[string]any{
+				"...": string(d.Hash(crypto.SHA256.New())),
+			}
+			data[field] = arr
+		} else {
+			// Create disclosure for object property
+			d, err := disclosure.NewFromObject(field, value, nil)
+			if err != nil {
+				return err
+			}
+			*disclosures = append(*disclosures, *d)
+
+			// Add hash to _sd array
+			hash := d.Hash(crypto.SHA256.New())
+			if data["_sd"] == nil {
+				data["_sd"] = []string{string(hash)}
+			} else {
+				data["_sd"] = append(data["_sd"].([]string), string(hash))
+			}
+			delete(data, field)
+		}
+		return nil
+	}
+
+	// Need to traverse deeper
+	if arrayIndex >= 0 {
+		arr, ok := value.([]any)
+		if !ok {
+			return fmt.Errorf("field %s is not an array", field)
+		}
+		if arrayIndex >= len(arr) {
+			return fmt.Errorf("array index %d out of bounds for field %s", arrayIndex, field)
+		}
+		nextMap, ok := arr[arrayIndex].(map[string]any)
+		if !ok {
+			return fmt.Errorf("array element at index %d of field %s is not an object", arrayIndex, field)
+		}
+		if err := processPath(nextMap, pathParts[1:], disclosures); err != nil {
+			return err
+		}
+		arr[arrayIndex] = nextMap
+		data[field] = arr
+		return nil
+	}
+
+	nextMap, ok := value.(map[string]any)
+	if !ok {
+		return fmt.Errorf("field %s is not an object", field)
+	}
+	return processPath(nextMap, pathParts[1:], disclosures)
 }
 
-// VerifyVerifiableCredential verifies a VerifiableCredential SD-JWT using the provided key.
-func VerifyVerifiableCredential(sdJWT string, key jwk.Key) (*credential.VerifiableCredential, []disclosure.Disclosure, error) {
-	if sdJWT == "" {
-		return nil, nil, errors.New("SD-JWT is empty")
-	}
-	parsedSDJWT, err := sdjwt.New(sdJWT)
+// VerifyVerifiableCredential verifies an SD-JWT credential and returns the disclosed claims
+func VerifyVerifiableCredential(sdJwtStr string, key jwk.Key) (*credential.VerifiableCredential, error) {
+	// Parse and verify the SD-JWT
+	sdJwt, err := sdjwt.New(sdJwtStr)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse SD-JWT: %w", err)
-	}
-	if parsedSDJWT == nil {
-		return nil, nil, errors.New("parsed SD-JWT is nil")
-	}
-	if parsedSDJWT.KbJwt != nil {
-		return nil, nil, errors.New("kbJWT not yet supported")
-	}
-	if parsedSDJWT.Head == nil || len(parsedSDJWT.Head) == 0 {
-		return nil, nil, errors.New("head should not be empty")
-	}
-	if parsedSDJWT.Body == nil {
-		return nil, nil, errors.New("body should not be empty")
-	}
-	if parsedSDJWT.Signature == "" {
-		return nil, nil, errors.New("signature should not be empty")
+		return nil, fmt.Errorf("failed to parse SD-JWT: %w", err)
 	}
 
-	token, err := parsedSDJWT.Token()
-	if err != nil || token == nil {
-		return nil, nil, fmt.Errorf("failed to get token from SD-JWT: %w", err)
-	}
-
-	// Verify the JWT signature
-	payload, err := jws.Verify([]byte(*token), jws.WithKey(key.Algorithm(), key))
+	// Get disclosed claims
+	claims, err := sdJwt.GetDisclosedClaims()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to verify JWT signature: %w", err)
+		return nil, fmt.Errorf("failed to get disclosed claims: %w", err)
 	}
 
-	// Parse the payload into a VerifiableCredential
+	// Convert claims back to VerifiableCredential
+	vcBytes, err := json.Marshal(claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal claims: %w", err)
+	}
+
 	var vc credential.VerifiableCredential
-	if err = json.Unmarshal(payload, &vc); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal payload into VerifiableCredential: %w", err)
+	if err = json.Unmarshal(vcBytes, &vc); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal VC: %w", err)
 	}
 
-	return &vc, parsedSDJWT.Disclosures, nil
-}
-
-// SignVerifiablePresentation signs a VerifiablePresentation as an SD-JWT using the provided key.
-func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (*string, error) {
-	if vp.IsEmpty() {
-		return nil, errors.New("VerifiablePresentation is empty")
+	// Extract signature from SD-JWT
+	parts := strings.Split(sdJwtStr, "~")
+	if len(parts) < 1 {
+		return nil, errors.New("invalid SD-JWT format")
 	}
 
-	jwt, err := jose.SignVerifiablePresentation(vp, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign VerifiablePresentation: %w", err)
+	jwsParts := strings.Split(parts[0], ".")
+	if len(jwsParts) != 3 {
+		return nil, errors.New("invalid JWT format")
 	}
 
-	sdJWT, err := sdjwt.New(jwt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create SD-JWT from JWT: %w", err)
+	signedData := []byte(fmt.Sprintf("%s.%s.%s", jwsParts[0], jwsParts[1], jwsParts[2]))
+	if _, err = jws.Verify(signedData, jws.WithKey(key.Algorithm(), key)); err != nil {
+		return nil, fmt.Errorf("invalid JWT signature: %w", err)
 	}
 
-	return sdJWT.Token()
-}
-
-// VerifyVerifiablePresentation verifies a VerifiablePresentation SD-JWT using the provided key.
-func VerifyVerifiablePresentation(sdJWT string, key jwk.Key) (*credential.VerifiablePresentation, DisclosedClaims, error) {
-	if sdJWT == "" {
-		return nil, nil, errors.New("SD-JWT is empty")
-	}
-	parsedSDJWT, err := sdjwt.New(sdJWT)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse SD-JWT: %w", err)
-	}
-	if parsedSDJWT == nil {
-		return nil, nil, errors.New("parsed SD-JWT is nil")
-	}
-	if parsedSDJWT.KbJwt != nil {
-		return nil, nil, errors.New("kbJWT not yet supported")
-	}
-	if parsedSDJWT.Head == nil || len(parsedSDJWT.Head) == 0 {
-		return nil, nil, errors.New("head should not be empty")
-	}
-	if parsedSDJWT.Body == nil {
-		return nil, nil, errors.New("body should not be empty")
-	}
-	if parsedSDJWT.Signature == "" {
-		return nil, nil, errors.New("signature should not be empty")
-	}
-
-	token, err := parsedSDJWT.Token()
-	if err != nil || token == nil {
-		return nil, nil, fmt.Errorf("failed to get token from SD-JWT: %w", err)
-	}
-
-	disclosedClaims, err := parsedSDJWT.GetDisclosedClaims()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get disclosed claims from SD-JWT: %w", err)
-	}
-
-	vp, err := jose.VerifyVerifiablePresentation(*token, key)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to verify SD-JWT: %w", err)
-	}
-
-	return vp, disclosedClaims, nil
+	return &vc, nil
 }
