@@ -149,19 +149,19 @@ type Schema struct {
 	DigestSRI string `json:"digestSRI,omitempty"`
 }
 
-func (v *VerifiableCredential) IsEmpty() bool {
-	if v == nil {
+func (vc *VerifiableCredential) IsEmpty() bool {
+	if vc == nil {
 		return true
 	}
-	return reflect.DeepEqual(v, &VerifiableCredential{})
+	return reflect.DeepEqual(vc, &VerifiableCredential{})
 }
 
-func (v *VerifiableCredential) IsValid() error {
-	return util.NewValidator().Struct(v)
+func (vc *VerifiableCredential) IsValid() error {
+	return util.NewValidator().Struct(vc)
 }
 
-func (v *VerifiableCredential) IssuerID() string {
-	return v.Issuer.ID()
+func (vc *VerifiableCredential) IssuerID() string {
+	return vc.Issuer.ID()
 }
 
 // VerifiablePresentation https://www.w3.org/TR/vc-data-model-2.0/#verifiable-presentations
@@ -188,13 +188,13 @@ func (vp *VerifiablePresentation) ToMap() (map[string]any, error) {
 	return result, nil
 }
 
-func (v *VerifiablePresentation) IsEmpty() bool {
-	if v == nil {
+func (vp *VerifiablePresentation) IsEmpty() bool {
+	if vp == nil {
 		return true
 	}
-	return reflect.DeepEqual(v, &VerifiablePresentation{})
+	return reflect.DeepEqual(vp, &VerifiablePresentation{})
 }
 
-func (v *VerifiablePresentation) IsValid() error {
-	return util.NewValidator().Struct(v)
+func (vp *VerifiablePresentation) IsValid() error {
+	return util.NewValidator().Struct(vp)
 }
