@@ -94,6 +94,138 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
 			},
 		},
+		{
+			name:  "EC P-384 with simple credential subject disclosure",
+			curve: jwa.P384,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+			},
+			vc: &simpleVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
+		{
+			name:  "EC P-384 with complex nested disclosures",
+			curve: jwa.P384,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+				"credentialSubject.address.streetAddress",
+				"credentialSubject.details[0]",
+			},
+			vc: &detailVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+				address := vc.CredentialSubject["address"].(map[string]any)
+				assert.Equal(t, "123 Main St", address["streetAddress"])
+				assert.Equal(t, "Anytown", address["city"])
+				details := vc.CredentialSubject["details"].([]any)
+				assert.Equal(t, "Detail 1", details[0])
+			},
+		},
+		{
+			name:  "EC P-384 with top level disclosures",
+			curve: jwa.P384,
+			disclosurePaths: []DisclosurePath{
+				"id",
+				"validFrom",
+				"credentialSubject.id",
+			},
+			vc: &simpleVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "https://example.edu/credentials/1872", vc.ID)
+				assert.Equal(t, "2010-01-01T19:23:24Z", vc.ValidFrom)
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
+		{
+			name:  "EC P-521 with simple credential subject disclosure",
+			curve: jwa.P521,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+			},
+			vc: &simpleVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
+		{
+			name:  "EC P-521 with complex nested disclosures",
+			curve: jwa.P521,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+				"credentialSubject.address.streetAddress",
+				"credentialSubject.details[0]",
+			},
+			vc: &detailVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+				address := vc.CredentialSubject["address"].(map[string]any)
+				assert.Equal(t, "123 Main St", address["streetAddress"])
+				assert.Equal(t, "Anytown", address["city"])
+				details := vc.CredentialSubject["details"].([]any)
+				assert.Equal(t, "Detail 1", details[0])
+			},
+		},
+		{
+			name:  "EC P-521 with top level disclosures",
+			curve: jwa.P521,
+			disclosurePaths: []DisclosurePath{
+				"id",
+				"validFrom",
+				"credentialSubject.id",
+			},
+			vc: &simpleVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "https://example.edu/credentials/1872", vc.ID)
+				assert.Equal(t, "2010-01-01T19:23:24Z", vc.ValidFrom)
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
+		{
+			name:  "OKP EdDSA with simple credential subject disclosure",
+			curve: jwa.Ed25519,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+			},
+			vc: &simpleVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
+		{
+			name:  "OKP EdDSA with complex nested disclosures",
+			curve: jwa.Ed25519,
+			disclosurePaths: []DisclosurePath{
+				"credentialSubject.id",
+				"credentialSubject.address.streetAddress",
+				"credentialSubject.details[0]",
+			},
+			vc: &detailVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+				address := vc.CredentialSubject["address"].(map[string]any)
+				assert.Equal(t, "123 Main St", address["streetAddress"])
+				assert.Equal(t, "Anytown", address["city"])
+				details := vc.CredentialSubject["details"].([]any)
+				assert.Equal(t, "Detail 1", details[0])
+			},
+		},
+		{
+			name:  "OKP EdDSA with top level disclosures",
+			curve: jwa.Ed25519,
+			disclosurePaths: []DisclosurePath{
+				"id",
+				"validFrom",
+				"credentialSubject.id",
+			},
+			vc: &simpleVC,
+			verifyFields: func(t *testing.T, vc *credential.VerifiableCredential) {
+				assert.Equal(t, "https://example.edu/credentials/1872", vc.ID)
+				assert.Equal(t, "2010-01-01T19:23:24Z", vc.ValidFrom)
+				assert.Equal(t, "did:example:ebfeb1f712ebc6f1c276e12ec21", vc.CredentialSubject["id"])
+			},
+		},
 	}
 
 	for _, tt := range tests {
