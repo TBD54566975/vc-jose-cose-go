@@ -13,9 +13,6 @@ This guide is for you.
 
 ## Development Prerequisites
 
-___***UPDATE TABLE OF PROJECT DEPS AND INSTALLATION NOTES***___
-
-
 | Requirement | Tested Version | Installation Instructions                             |
 | ----------- | -------------- | ----------------------------------------------------- |
 | Go          | 1.23.2         | [go.dev](https://go.dev/doc/tutorial/compile-install) |
