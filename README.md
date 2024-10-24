@@ -1,3 +1,11 @@
+[![godoc vc-jose-cose-go](https://img.shields.io/badge/godoc-vc--jose--cose--go-blue)](https://pkg.go.dev/github.com/TBD54566975/vc-jose-cose-go)
+[![go version 1.23.2](https://img.shields.io/badge/go_version-1.23.2-brightgreen)](https://golang.org/)
+[![Go Report Card A+](https://goreportcard.com/badge/github.com/TBD54566975/vc-jose-cose-go)](https://goreportcard.com/report/github.com/TBD54566975/vc-jose-cose-go)
+[![license Apache 2](https://img.shields.io/badge/license-Apache%202-black)](https://github.com/TBD54566975/vc-jose-cose-go/blob/main/LICENSE)
+[![issues](https://img.shields.io/github/issues/TBD54566975/vc-jose-cose-go)](https://github.com/TBD54566975/vc-jose-cose-go/issues)
+![ci status](https://github.com/TBD54566975/vc-jose-cose-go/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
+[![codecov](https://codecov.io/github/TBD54566975/vc-jose-cose-go/graph/badge.svg?token=PIS07W0RQJ)](https://codecov.io/github/TBD54566975/vc-jose-cose-go)
+
 # VC JOSE COSE in GO
 
 A lightweight go implementation of the [W3C Verifiable Credentials v2 Data Model](https://www.w3.org/TR/vc-data-model-2.0)
