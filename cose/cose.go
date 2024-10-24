@@ -80,7 +80,7 @@ func getCOSESigner(key jwk.Key) (cose.Signer, error) {
 	case jwa.ES512:
 		alg = cose.AlgorithmES512
 	case jwa.EdDSA:
-		alg = cose.AlgorithmEd25519
+		alg = cose.AlgorithmEdDSA
 	default:
 		return nil, fmt.Errorf("unsupported algorithm: %s", key.Algorithm())
 	}
@@ -146,7 +146,7 @@ func getCOSEVerifier(key jwk.Key) (cose.Verifier, error) {
 	case jwa.ES512:
 		alg = cose.AlgorithmES512
 	case jwa.EdDSA:
-		alg = cose.AlgorithmEd25519
+		alg = cose.AlgorithmEdDSA
 	default:
 		return nil, fmt.Errorf("unsupported algorithm: %s", key.Algorithm())
 	}
