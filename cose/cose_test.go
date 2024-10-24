@@ -38,12 +38,12 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 				},
 			}
 
-			cose, err := SignVerifiableCredential(vc, key)
+			cs1, err := SignVerifiableCredential(vc, key)
 			require.NoError(t, err)
-			assert.NotEmpty(t, cose)
+			assert.NotEmpty(t, cs1)
 
 			// Verify the VC
-			verifiedVC, err := VerifyVerifiableCredential(cose, key)
+			verifiedVC, err := VerifyVerifiableCredential(cs1, key)
 			require.NoError(t, err)
 			assert.Equal(t, vc.ID, verifiedVC.ID)
 			assert.Equal(t, vc.Issuer.ID(), verifiedVC.Issuer.ID())
@@ -74,12 +74,12 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 				Holder:  credential.NewIssuerHolderFromString("did:example:ebfeb1f712ebc6f1c276e12ec21"),
 			}
 
-			cose, err := SignVerifiablePresentation(vp, key)
+			cs1, err := SignVerifiablePresentation(vp, key)
 			require.NoError(t, err)
-			assert.NotEmpty(t, cose)
+			assert.NotEmpty(t, cs1)
 
 			// Verify the VP
-			verifiedVP, err := VerifyVerifiablePresentation(cose, key)
+			verifiedVP, err := VerifyVerifiablePresentation(cs1, key)
 			require.NoError(t, err)
 			assert.Equal(t, vp.ID, verifiedVP.ID)
 			assert.Equal(t, vp.Holder.ID(), verifiedVP.Holder.ID())

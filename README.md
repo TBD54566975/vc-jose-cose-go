@@ -6,7 +6,7 @@
 ![ci status](https://github.com/TBD54566975/vc-jose-cose-go/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
 [![codecov](https://codecov.io/github/TBD54566975/vc-jose-cose-go/graph/badge.svg?token=PIS07W0RQJ)](https://codecov.io/github/TBD54566975/vc-jose-cose-go)
 
-# VC JOSE COSE in GO
+# VC JOSE COSE in go
 
 A lightweight go implementation of the [W3C Verifiable Credentials v2 Data Model](https://www.w3.org/TR/vc-data-model-2.0)
 with support for [Securing Verifiable Credentials using JOSE and COSE](https://www.w3.org/TR/vc-jose-cose/).
@@ -135,12 +135,12 @@ func main() {
     key, _ := util.GenerateJWK(jwa.Ed25519)
 
     // Sign the VC
-    cose, err := cose.SignVerifiableCredential(vc, key)
+    cs1, err := cose.SignVerifiableCredential(vc, key)
     if err != nil {
         // Handle error
     }
     
-    vc, err := cose.VerifyVerifiableCredential(cose, key)
+    vc, err := cose.VerifyVerifiableCredential(cs1, key)
     if err != nil {
         // Handle error
     }
