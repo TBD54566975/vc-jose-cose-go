@@ -24,6 +24,9 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (
 	if vc.IsEmpty() {
 		return nil, errors.New("VerifiableCredential is empty")
 	}
+	if key == nil {
+		return nil, errors.New("key is required")
+	}
 	if key.KeyID() == "" {
 		return nil, errors.New("key ID is required")
 	}
@@ -82,6 +85,19 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, key jwk.Key) (
 
 // VerifyVerifiableCredential verifies a VerifiableCredential JWT using the provided key.
 func VerifyVerifiableCredential(jwt string, key jwk.Key) (*credential.VerifiableCredential, error) {
+	if jwt == "" {
+		return nil, errors.New("JWT is required")
+	}
+	if key == nil {
+		return nil, errors.New("key is required")
+	}
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
+
 	// Verify the JWT signature and get the payload
 	payload, err := jws.Verify([]byte(jwt), jws.WithKey(key.Algorithm(), key))
 	if err != nil {
@@ -99,7 +115,12 @@ func VerifyVerifiableCredential(jwt string, key jwk.Key) (*credential.Verifiable
 
 // SignVerifiablePresentation dynamically signs a VerifiablePresentation based on the key type.
 func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (string, error) {
-	var alg jwa.SignatureAlgorithm
+	if vp.IsEmpty() {
+		return "", errors.New("VerifiablePresentation is empty")
+	}
+	if key == nil {
+		return "", errors.New("key is required")
+	}
 	if key.KeyID() == "" {
 		return "", errors.New("key ID is required")
 	}
@@ -107,6 +128,7 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 		return "", errors.New("key algorithm is required")
 	}
 
+	var alg jwa.SignatureAlgorithm
 	kty := key.KeyType()
 	switch kty {
 	case jwa.EC:
@@ -185,6 +207,19 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 
 // VerifyVerifiablePresentation verifies a VerifiablePresentation JWT using the provided key.
 func VerifyVerifiablePresentation(jwt string, key jwk.Key) (*credential.VerifiablePresentation, error) {
+	if jwt == "" {
+		return nil, errors.New("JWT is required")
+	}
+	if key == nil {
+		return nil, errors.New("key is required")
+	}
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
+
 	// Verify the JWT signature and get the payload
 	payload, err := jws.Verify([]byte(jwt), jws.WithKey(key.Algorithm(), key))
 	if err != nil {

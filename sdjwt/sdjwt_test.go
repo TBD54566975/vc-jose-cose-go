@@ -231,16 +231,16 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Generate issuer key
-			issuerKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			issuerKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 
 			// Sign the credential
-			sdJwt, err := SignVerifiableCredential(*tt.vc, tt.disclosurePaths, issuerKey)
+			sdJWT, err := SignVerifiableCredential(*tt.vc, tt.disclosurePaths, issuerKey)
 			require.NoError(t, err)
-			require.NotNil(t, sdJwt)
+			require.NotNil(t, sdJWT)
 
 			// Verify the credential
-			verifiedVC, err := VerifyVerifiableCredential(*sdJwt, issuerKey)
+			verifiedVC, err := VerifyVerifiableCredential(*sdJWT, issuerKey)
 			require.NoError(t, err)
 			require.NotNil(t, verifiedVC)
 
@@ -255,9 +255,9 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			}
 
 			// Verify validation fails with wrong key
-			wrongKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			wrongKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
-			_, err = VerifyVerifiableCredential(*sdJwt, wrongKey)
+			_, err = VerifyVerifiableCredential(*sdJWT, wrongKey)
 			assert.Error(t, err)
 		})
 	}
@@ -351,16 +351,16 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Generate holder key
-			holderKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			holderKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 
 			// Sign the presentation
-			sdJwt, err := SignVerifiablePresentation(*tt.vp, tt.disclosurePaths, holderKey)
+			sdJWT, err := SignVerifiablePresentation(*tt.vp, tt.disclosurePaths, holderKey)
 			require.NoError(t, err)
-			require.NotNil(t, sdJwt)
+			require.NotNil(t, sdJWT)
 
 			// Verify the presentation
-			verifiedVP, err := VerifyVerifiablePresentation(*sdJwt, holderKey)
+			verifiedVP, err := VerifyVerifiablePresentation(*sdJWT, holderKey)
 			require.NoError(t, err)
 			require.NotNil(t, verifiedVP)
 
@@ -375,9 +375,9 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 			}
 
 			// Verify validation fails with wrong key
-			wrongKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			wrongKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
-			_, err = VerifyVerifiablePresentation(*sdJwt, wrongKey)
+			_, err = VerifyVerifiablePresentation(*sdJWT, wrongKey)
 			assert.Error(t, err)
 		})
 	}

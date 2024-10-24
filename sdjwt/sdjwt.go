@@ -2,11 +2,12 @@ package sdjwt
 
 import (
 	"crypto"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/goccy/go-json"
 
 	sdjwt "github.com/MichaelFraser99/go-sd-jwt"
 	"github.com/MichaelFraser99/go-sd-jwt/disclosure"
@@ -33,6 +34,9 @@ type DisclosurePath string
 func SignVerifiableCredential(vc credential.VerifiableCredential, disclosurePaths []DisclosurePath, key jwk.Key) (*string, error) {
 	if vc.IsEmpty() {
 		return nil, errors.New("VerifiableCredential is empty")
+	}
+	if key == nil {
+		return nil, errors.New("key is required")
 	}
 	if key.KeyID() == "" {
 		return nil, errors.New("key ID is required")
@@ -101,8 +105,8 @@ func SignVerifiableCredential(vc credential.VerifiableCredential, disclosurePath
 		sdJWTParts = append(sdJWTParts, d.EncodedValue)
 	}
 
-	sdJwt := fmt.Sprintf("%s~", strings.Join(sdJWTParts, "~"))
-	return &sdJwt, nil
+	sdJWT := fmt.Sprintf("%s~", strings.Join(sdJWTParts, "~"))
+	return &sdJWT, nil
 }
 
 // processDisclosures traverses the credential map and creates disclosures for specified paths
@@ -214,19 +218,33 @@ func processPath(data map[string]any, pathParts []string, disclosures *[]disclos
 	if !ok {
 		return fmt.Errorf("field %s is not an object", field)
 	}
+
 	return processPath(nextMap, pathParts[1:], disclosures)
 }
 
 // VerifyVerifiableCredential verifies an SD-JWT credential and returns the disclosed claims
-func VerifyVerifiableCredential(sdJwtStr string, key jwk.Key) (*credential.VerifiableCredential, error) {
+func VerifyVerifiableCredential(sdJWT string, key jwk.Key) (*credential.VerifiableCredential, error) {
+	if sdJWT == "" {
+		return nil, errors.New("SD-JWT is required")
+	}
+	if key == nil {
+		return nil, errors.New("key is required")
+	}
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
+
 	// Parse and verify the SD-JWT
-	sdJwt, err := sdjwt.New(sdJwtStr)
+	sdJWTContainer, err := sdjwt.New(sdJWT)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SD-JWT: %w", err)
 	}
 
 	// Get disclosed claims
-	claims, err := sdJwt.GetDisclosedClaims()
+	claims, err := sdJWTContainer.GetDisclosedClaims()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get disclosed claims: %w", err)
 	}
@@ -243,7 +261,7 @@ func VerifyVerifiableCredential(sdJwtStr string, key jwk.Key) (*credential.Verif
 	}
 
 	// Extract signature from SD-JWT
-	parts := strings.Split(sdJwtStr, "~")
+	parts := strings.Split(sdJWT, "~")
 	if len(parts) < 1 {
 		return nil, errors.New("invalid SD-JWT format")
 	}
@@ -266,11 +284,17 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, disclosure
 	if vp.IsEmpty() {
 		return nil, errors.New("VerifiablePresentation is empty")
 	}
+	if key == nil {
+		return nil, errors.New("key is required")
+	}
 	if key.KeyID() == "" {
 		return nil, errors.New("key ID is required")
 	}
 	if key.Algorithm().String() == "" {
 		return nil, errors.New("key algorithm is required")
+	}
+	if len(disclosurePaths) == 0 {
+		return nil, errors.New("at least one disclosure path is required")
 	}
 
 	// Convert VP to a map for manipulation
@@ -327,20 +351,33 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, disclosure
 		sdJWTParts = append(sdJWTParts, d.EncodedValue)
 	}
 
-	sdJwt := fmt.Sprintf("%s~", strings.Join(sdJWTParts, "~"))
-	return &sdJwt, nil
+	sdJWT := fmt.Sprintf("%s~", strings.Join(sdJWTParts, "~"))
+	return &sdJWT, nil
 }
 
 // VerifyVerifiablePresentation verifies an SD-JWT presentation and returns the disclosed claims
-func VerifyVerifiablePresentation(sdJwtStr string, key jwk.Key) (*credential.VerifiablePresentation, error) {
+func VerifyVerifiablePresentation(sdJWT string, key jwk.Key) (*credential.VerifiablePresentation, error) {
+	if sdJWT == "" {
+		return nil, errors.New("SD-JWT is required")
+	}
+	if key == nil {
+		return nil, errors.New("key is required")
+	}
+	if key.KeyID() == "" {
+		return nil, errors.New("key ID is required")
+	}
+	if key.Algorithm().String() == "" {
+		return nil, errors.New("key algorithm is required")
+	}
+
 	// Parse and verify the SD-JWT
-	sdJwt, err := sdjwt.New(sdJwtStr)
+	sdJWTContainer, err := sdjwt.New(sdJWT)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SD-JWT: %w", err)
 	}
 
 	// Get disclosed claims
-	claims, err := sdJwt.GetDisclosedClaims()
+	claims, err := sdJWTContainer.GetDisclosedClaims()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get disclosed claims: %w", err)
 	}
@@ -357,7 +394,7 @@ func VerifyVerifiablePresentation(sdJwtStr string, key jwk.Key) (*credential.Ver
 	}
 
 	// Extract signature from SD-JWT
-	parts := strings.Split(sdJwtStr, "~")
+	parts := strings.Split(sdJWT, "~")
 	if len(parts) < 1 {
 		return nil, errors.New("invalid SD-JWT format")
 	}

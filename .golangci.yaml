@@ -1,8 +1,6 @@
 # See https://golangci-lint.run/usage/configuration/ for reference.
 run:
   concurrency: 16
-  build-tags:
-    - jwx_es256k
 
 output:
   sort-results: true
@@ -328,4 +326,5 @@ linters-settings:
     config:
       G101:
         pattern: "(/i)passwd|pass|password|pwd|secret|token|pw|apiKey|bearer"
+
 
