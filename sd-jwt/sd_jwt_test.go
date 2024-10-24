@@ -231,7 +231,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Generate issuer key
-			issuerKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			issuerKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 
 			// Sign the credential
@@ -255,7 +255,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 			}
 
 			// Verify validation fails with wrong key
-			wrongKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			wrongKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 			_, err = VerifyVerifiableCredential(*sdJwt, wrongKey)
 			assert.Error(t, err)
@@ -351,7 +351,7 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Generate holder key
-			holderKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			holderKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 
 			// Sign the presentation
@@ -375,7 +375,7 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 			}
 
 			// Verify validation fails with wrong key
-			wrongKey, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			wrongKey, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 			_, err = VerifyVerifiablePresentation(*sdJwt, wrongKey)
 			assert.Error(t, err)

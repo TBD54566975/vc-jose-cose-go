@@ -2,11 +2,12 @@ package sdjwt
 
 import (
 	"crypto"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/goccy/go-json"
 
 	sdjwt "github.com/MichaelFraser99/go-sd-jwt"
 	"github.com/MichaelFraser99/go-sd-jwt/disclosure"

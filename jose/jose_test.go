@@ -24,7 +24,7 @@ func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			key, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 
 			vc := credential.VerifiableCredential{
@@ -64,7 +64,7 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := util.GenerateJWKWithAlgorithm(tt.curve)
+			key, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 
 			vp := credential.VerifiablePresentation{

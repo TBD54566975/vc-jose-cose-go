@@ -40,7 +40,9 @@ const (
 	P521           KeyType = "P-521"
 )
 
-func GenerateJWKWithAlgorithm(eca jwa.EllipticCurveAlgorithm) (jwk.Key, error) {
+// GenerateJWK creates a new JWK key pair for the given elliptic curve algorithm
+// The key ID is set to the base64 URL-encoded SHA-256 thumbprint of the key.
+func GenerateJWK(eca jwa.EllipticCurveAlgorithm) (jwk.Key, error) {
 	// Generate the key pair
 	_, privKey, err := GenerateKeyByEllipticCurveAlgorithm(eca)
 	if err != nil {
