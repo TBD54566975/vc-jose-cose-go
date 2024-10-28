@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/go-playground/validator/v10 v10.22.1
-	github.com/lestrrat-go/jwx/v2 v2.1.1
+	github.com/lestrrat-go/jwx/v2 v2.1.2
 	github.com/magefile/mage v1.15.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
