@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/MichaelFraser99/go-sd-jwt v1.2.1
+	github.com/MichaelFraser99/go-sd-jwt v1.3.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
