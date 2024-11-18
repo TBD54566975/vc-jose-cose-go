@@ -3,7 +3,7 @@ module github.com/TBD54566975/vc-jose-cose-go
 go 1.23.2
 
 require (
-	github.com/go-playground/validator/v10 v10.22.1
+	github.com/go-playground/validator/v10 v10.23.0
 	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/magefile/mage v1.15.0
 	github.com/pkg/errors v0.9.1
