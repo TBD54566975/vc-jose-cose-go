@@ -114,18 +114,18 @@ func VerifyVerifiableCredential(jwt string, key jwk.Key) (*credential.Verifiable
 }
 
 // SignVerifiablePresentation dynamically signs a VerifiablePresentation based on the key type.
-func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (string, error) {
+func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Key) (*string, error) {
 	if vp.IsEmpty() {
-		return "", errors.New("VerifiablePresentation is empty")
+		return nil, errors.New("VerifiablePresentation is empty")
 	}
 	if key == nil {
-		return "", errors.New("key is required")
+		return nil, errors.New("key is required")
 	}
 	if key.KeyID() == "" {
-		return "", errors.New("key ID is required")
+		return nil, errors.New("key ID is required")
 	}
 	if key.Algorithm().String() == "" {
-		return "", errors.New("key algorithm is required")
+		return nil, errors.New("key algorithm is required")
 	}
 
 	var alg jwa.SignatureAlgorithm
@@ -134,7 +134,7 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 	case jwa.EC:
 		crv, ok := key.Get("crv")
 		if !ok || crv == nil {
-			return "", fmt.Errorf("invalid or missing 'crv' parameter")
+			return nil, fmt.Errorf("invalid or missing 'crv' parameter")
 		}
 		crvAlg := crv.(jwa.EllipticCurveAlgorithm)
 		switch crvAlg {
@@ -145,22 +145,22 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 		case jwa.P521:
 			alg = jwa.ES512
 		default:
-			return "", fmt.Errorf("unsupported curve: %s", crvAlg.String())
+			return nil, fmt.Errorf("unsupported curve: %s", crvAlg.String())
 		}
 	case jwa.OKP:
 		alg = jwa.EdDSA
 	default:
-		return "", fmt.Errorf("unsupported key type: %s", kty)
+		return nil, fmt.Errorf("unsupported key type: %s", kty)
 	}
 
 	// Convert the VerifiablePresentation to a map for manipulation
 	vpMap := make(map[string]any)
 	vpBytes, err := json.Marshal(vp)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if err = json.Unmarshal(vpBytes, &vpMap); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Add standard claims
@@ -179,7 +179,7 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 	// Marshal the claims to JSON
 	payload, err := json.Marshal(vpMap)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Add protected header values
@@ -192,17 +192,18 @@ func SignVerifiablePresentation(vp credential.VerifiablePresentation, key jwk.Ke
 	}
 	for k, v := range headers {
 		if err = jwsHeaders.Set(k, v); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
 	// Sign the payload
 	signed, err := jws.Sign(payload, jws.WithKey(alg, key, jws.WithProtectedHeaders(jwsHeaders)))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(signed), nil
+	result := string(signed)
+	return &result, nil
 }
 
 // VerifyVerifiablePresentation verifies a VerifiablePresentation JWT using the provided key.

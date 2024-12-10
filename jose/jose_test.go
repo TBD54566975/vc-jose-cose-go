@@ -79,7 +79,7 @@ func Test_Sign_Verify_VerifiablePresentation(t *testing.T) {
 			assert.NotEmpty(t, jwt)
 
 			// Verify the VP
-			verifiedVP, err := VerifyVerifiablePresentation(jwt, key)
+			verifiedVP, err := VerifyVerifiablePresentation(*jwt, key)
 			require.NoError(t, err)
 			assert.Equal(t, vp.ID, verifiedVP.ID)
 			assert.Equal(t, vp.Holder.ID(), verifiedVP.Holder.ID())
