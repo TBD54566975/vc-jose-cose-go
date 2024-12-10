@@ -29,8 +29,8 @@ type VerificationMethod struct {
 	Type               string                     `json:"type" validate:"required"`
 	Controller         util.SingleOrArray[string] `json:"controller" validate:"required"`
 	Revoked            string                     `json:"revoked,omitempty"`
-	PublicKeyJWK       jwk.Key                    `json:"publicKeyJwk,omitempty"`
-	SecretKeyJWK       jwk.Key                    `json:"secretKeyJwk,omitempty"`
+	PublicKeyJWK       *jwk.Key                   `json:"publicKeyJwk,omitempty"`
+	SecretKeyJWK       *jwk.Key                   `json:"secretKeyJwk,omitempty"`
 	PublicKeyMultibase string                     `json:"publicKeyMultibase,omitempty"`
 	SecretKeyMultibase string                     `json:"secretKeyMultibase,omitempty"`
 }
