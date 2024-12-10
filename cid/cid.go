@@ -4,7 +4,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 
-	"github.com/TBD54566975/vc-jose-cose-go/util"
+	"github.com/decentralgabe/vc-jose-cose-go/util"
 )
 
 const (
