@@ -1,4 +1,4 @@
-module github.com/TBD54566975/vc-jose-cose-go
+module github.com/TBD54566975/vm-jose-cose-go
 
 go 1.23.2
 
@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/TBD54566975/vc-jose-cose-go v0.0.0-20241210044408-487d633d17dd // indirect
 	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 )
