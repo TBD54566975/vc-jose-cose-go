@@ -4,7 +4,7 @@ There are many ways to be an open source contributor, and we're here to help you
 
 * Propose ideas in our
   [discord](https://discord.gg/tbd)
-* Raise an issue or feature request in our [issue tracker](https://github.com/TBD54566975/vm-jose-cose-go/issues)
+* Raise an issue or feature request in our [issue tracker](https://github.com/TBD54566975/vc-jose-cose-go/issues)
 * Help another contributor with one of their questions, or a code review
 * Suggest improvements to our Getting Started documentation by supplying a Pull Request
 * Evangelize our work together in conferences, podcasts, and social media spaces.
@@ -74,7 +74,7 @@ Installation instructions are on the [Magefile home page](https://magefile.org/)
 ### Issues
 
 Anyone from the community is welcome (and encouraged!) to raise issues via
-[GitHub Issues](https://github.com/TBD54566975/vm-jose-cose-go/issues)
+[GitHub Issues](https://github.com/TBD54566975/vc-jose-cose-go/issues)
 
 ### Discussions
 
@@ -84,7 +84,7 @@ We advocate an asynchronous, written debate model - so write up your thoughts an
 
 ### Continuous Integration
 
-Build and Test cycles are run on every commit to every branch on [GitHub Actions](https://github.com/TBD54566975/vm-jose-cose-go/actions).
+Build and Test cycles are run on every commit to every branch on [GitHub Actions](https://github.com/TBD54566975/vc-jose-cose-go/actions).
 
 ## Contribution
 
