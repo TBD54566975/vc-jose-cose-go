@@ -1,4 +1,4 @@
-module github.com/decentralgabe/vc-jose-cose-go
+module github.com/TBD54566975/vc-jose-cose-go
 
 go 1.23.2
 
