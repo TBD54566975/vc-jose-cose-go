@@ -1,4 +1,4 @@
-package controller
+package cid
 
 import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -15,7 +15,7 @@ const (
 type Document struct {
 	ID                   string                     `json:"id" validate:"required"`
 	AlsoKnownAs          []string                   `json:"alsoKnownAs,omitempty"`
-	Controller           util.SingleOrArray[string] `json:"controller,omitempty"`
+	Controller           util.SingleOrArray[string] `json:"cid,omitempty"`
 	VerificationMethod   []VerificationMethod       `json:"verificationMethod,omitempty"`
 	Authentication       []VerificationMethodMap    `json:"authentication,omitempty"`
 	AssertionMethod      []VerificationMethodMap    `json:"assertionMethod,omitempty"`
@@ -27,7 +27,7 @@ type Document struct {
 type VerificationMethod struct {
 	ID                 string                     `json:"id" validate:"required"`
 	Type               string                     `json:"type" validate:"required"`
-	Controller         util.SingleOrArray[string] `json:"controller" validate:"required"`
+	Controller         util.SingleOrArray[string] `json:"cid" validate:"required"`
 	Revoked            string                     `json:"revoked,omitempty"`
 	PublicKeyJWK       jwk.Key                    `json:"publicKeyJwk,omitempty"`
 	SecretKeyJWK       jwk.Key                    `json:"secretKeyJwk,omitempty"`
