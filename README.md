@@ -1,15 +1,15 @@
-[![godoc vc-jose-cose-go](https://img.shields.io/badge/godoc-vc--jose--cose--go-blue)](https://pkg.go.dev/github.com/TBD54566975/vc-jose-cose-go)
-[![go version 1.23.2](https://img.shields.io/badge/go_version-1.23.2-brightgreen)](https://golang.org/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TBD54566975/vc-jose-cose-go)](https://goreportcard.com/report/github.com/TBD54566975/vc-jose-cose-go)
-[![license Apache 2](https://img.shields.io/badge/license-Apache%202-black)](https://github.com/TBD54566975/vc-jose-cose-go/blob/main/LICENSE)
-[![issues](https://img.shields.io/github/issues/TBD54566975/vc-jose-cose-go)](https://github.com/TBD54566975/vc-jose-cose-go/issues)
-![ci status](https://github.com/TBD54566975/vc-jose-cose-go/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
-[![codecov](https://codecov.io/github/TBD54566975/vc-jose-cose-go/graph/badge.svg?token=PIS07W0RQJ)](https://codecov.io/github/TBD54566975/vc-jose-cose-go)
+[![godoc vc-jose-cose-go](https://img.shields.io/badge/godoc-vc--jose--cose--go-blue)](https://pkg.go.dev/github.com/decentralgabe/vc-jose-cose-go)
+[![go version 1.23.3](https://img.shields.io/badge/go_version-1.23.2-brightgreen)](https://golang.org/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/decentralgabe/vc-jose-cose-go)](https://goreportcard.com/report/github.com/decentralgabe/vc-jose-cose-go)
+[![license Apache 2](https://img.shields.io/badge/license-Apache%202-black)](https://github.com/decentralgabe/vc-jose-cose-go/blob/main/LICENSE)
+[![issues](https://img.shields.io/github/issues/decentralgabe/vc-jose-cose-go)](https://github.com/decentralgabe/vc-jose-cose-go/issues)
+![ci status](https://github.com/decentralgabe/vc-jose-cose-go/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
+[![codecov](https://codecov.io/github/decentralgabe/vm-jose-cose-go/graph/badge.svg?token=PIS07W0RQJ)](https://codecov.io/github/decentralgabe/vc-jose-cose-go)
 
 # VC JOSE COSE in go
 
-A lightweight go implementation of the [W3C Verifiable Credentials v2 Data Model](https://www.w3.org/TR/vc-data-model-2.0)
-with support for [Securing Verifiable Credentials using JOSE and COSE](https://www.w3.org/TR/vc-jose-cose/).
+A lightweight go implementation of the [W3C Verifiable Credentials v2 Data Model](https://www.w3.org/TR/vm-data-model-2.0)
+with support for [Securing Verifiable Credentials using JOSE and COSE](https://www.w3.org/TR/vm-jose-cose/).
 
 ## Usage
 
@@ -18,23 +18,23 @@ This library provides Go implementations for signing and verifying Verifiable Cr
 ## Installation
 
 ```
-go get github.com/TBD54566975/vc-jose-cose-go
+go get github.com/decentralgabe/vc-jose-cose-go
 ```
 
 ### JOSE (JSON Object Signing and Encryption)
 
 ```go
 import (
-    "github.com/TBD54566975/vc-jose-cose-go/jose"
-    "github.com/TBD54566975/vc-jose-cose-go/credential"
-    "github.com/TBD54566975/vc-jose-cose-go/util"
+    "github.com/decentralgabe/vc-jose-cose-go/jose"
+    "github.com/decentralgabe/vc-jose-cose-go/credential"
+    "github.com/decentralgabe/vc-jose-cose-go/util"
     "github.com/lestrrat-go/jwx/v2/jwk"
     "github.com/lestrrat-go/jwx/v2/jwa"
 )
 
 func main() {
     // Create a VC
-    vc := credential.VerifiableCredential{
+    vm := credential.VerifiableCredential{
 		Context:   []string{"https://www.w3.org/2018/credentials/v1"},
 		ID:        "https://example.edu/credentials/1872",
 		Type:      []string{"VerifiableCredential"},
@@ -49,12 +49,12 @@ func main() {
     key, _ := util.GenerateJWK(jwa.Ed25519)
 
     // Sign the VC
-    jwt, err := jose.SignVerifiableCredential(vc, key)
+    jwt, err := jose.SignVerifiableCredential(vm, key)
     if err != nil {
         // Handle error
     }
     
-    vc, err := jose.VerifyVerifiableCredential(jwt, key)
+    vm, err := jose.VerifyVerifiableCredential(jwt, key)
     if err != nil {
         // Handle error
     }
@@ -66,15 +66,15 @@ func main() {
 
 ```go
     import (
-        "github.com/TBD54566975/vc-jose-cose-go/sdjwt"
-        "github.com/TBD54566975/vc-jose-cose-go/credential"
-        "github.com/TBD54566975/vc-jose-cose-go/util"
+        "github.com/decentralgabe/vc-jose-cose-go/sdjwt"
+        "github.com/decentralgabe/vc-jose-cose-go/credential"
+        "github.com/decentralgabe/vc-jose-cose-go/util"
         "github.com/lestrrat-go/jwx/v2/jwk"
         "github.com/lestrrat-go/jwx/v2/jwa"
     )
 
     func main() {
-        vc := credential.VerifiableCredential{
+        vm := credential.VerifiableCredential{
             Context:   []string{"https://www.w3.org/2018/credentials/v1"},
             ID:        "https://example.edu/credentials/1872",
             Type:      []string{"VerifiableCredential"},
@@ -95,7 +95,7 @@ func main() {
         key, _ := util.GenerateJWK(jwa.Ed25519)
 
         // Create SD-JWT
-        sdJWT, err := sdjwt.SignVerifiableCredential(vc, disclosurePaths, issuerKey)
+        sdJWT, err := sdjwt.SignVerifiableCredential(vm, disclosurePaths, issuerKey)
         if err != nil {
             // Handle error
         }
@@ -111,16 +111,16 @@ func main() {
 
 ```go
 import (
-    "github.com/TBD54566975/vc-jose-cose-go/cose"
-    "github.com/TBD54566975/vc-jose-cose-go/credential"
-    "github.com/TBD54566975/vc-jose-cose-go/util"
+    "github.com/decentralgabe/vc-jose-cose-go/cose"
+    "github.com/decentralgabe/vc-jose-cose-go/credential"
+    "github.com/decentralgabe/vc-jose-cose-go/util"
     "github.com/lestrrat-go/jwx/v2/jwk"
     "github.com/lestrrat-go/jwx/v2/jwa"
 )
 
 func main() {
     // Create a VC
-    vc := credential.VerifiableCredential{
+    vm := credential.VerifiableCredential{
 		Context:   []string{"https://www.w3.org/2018/credentials/v1"},
 		ID:        "https://example.edu/credentials/1872",
 		Type:      []string{"VerifiableCredential"},
@@ -135,25 +135,15 @@ func main() {
     key, _ := util.GenerateJWK(jwa.Ed25519)
 
     // Sign the VC
-    cs1, err := cose.SignVerifiableCredential(vc, key)
+    cs1, err := cose.SignVerifiableCredential(vm, key)
     if err != nil {
         // Handle error
     }
     
-    vc, err := cose.VerifyVerifiableCredential(cs1, key)
+    vm, err := cose.VerifyVerifiableCredential(cs1, key)
     if err != nil {
         // Handle error
     }
     // Use the verified VC
 }
 ```
-
-## Project Resources
-
-| Resource                                   | Description                                                                    |
-| ------------------------------------------ | ------------------------------------------------------------------------------ |
-| [CODEOWNERS](./CODEOWNERS)                 | Outlines the project lead(s)                                                   |
-| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Expected behavior for project contributors, promoting a welcoming environment  |
-| [CONTRIBUTING.md](./CONTRIBUTING.md)       | Developer guide to build, test, run, access CI, chat, discuss, file issues     |
-| [GOVERNANCE.md](./GOVERNANCE.md)           | Project governance                                                             |
-| [LICENSE](./LICENSE)                       | Apache License, Version 2.0                                                    |

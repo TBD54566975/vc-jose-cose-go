@@ -14,7 +14,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
 
-	"github.com/TBD54566975/vc-jose-cose-go/credential"
+	"github.com/decentralgabe/vc-jose-cose-go/credential"
 )
 
 const (
