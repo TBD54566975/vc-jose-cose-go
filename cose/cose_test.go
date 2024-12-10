@@ -1,6 +1,9 @@
 package cose
 
 import (
+	"fmt"
+	"github.com/TBD54566975/vc-jose-cose-go/controller"
+	"github.com/goccy/go-json"
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
@@ -10,6 +13,42 @@ import (
 	"github.com/TBD54566975/vc-jose-cose-go/credential"
 	"github.com/TBD54566975/vc-jose-cose-go/util"
 )
+
+func TestGenerateKeys(t *testing.T) {
+	tests := []struct {
+		name  string
+		curve jwa.EllipticCurveAlgorithm
+		kid   string
+	}{
+		{"EC P-256", jwa.P256, "key-1"},
+		{"EC P-384", jwa.P384, "key-2"},
+		{"EC P-521", jwa.P521, "key-3"},
+		{"OKP EdDSA", jwa.Ed25519, "key-4"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key, err := util.GenerateJWK(tt.curve)
+			require.NoError(t, err)
+			assert.NotNil(t, key)
+
+			pubKey, _ := key.PublicKey()
+			assert.NotNil(t, pubKey)
+
+			id := "https://example.issuer/6c427e8392ab4057b93356fbb9022ecb"
+			vm := controller.VerificationMethod{
+				ID:           fmt.Sprintf("%s#%s", id, tt.kid),
+				Type:         controller.TypeJSONWebKey,
+				Controller:   util.SingleOrArray[string]{id},
+				PublicKeyJWK: pubKey,
+				SecretKeyJWK: key,
+			}
+
+			kb, _ := json.Marshal(vm)
+			t.Logf("\n%s\n", string(kb))
+		})
+	}
+}
 
 func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
 	tests := []struct {
