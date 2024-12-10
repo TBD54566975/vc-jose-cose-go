@@ -1,9 +1,6 @@
 package cose
 
 import (
-	"fmt"
-	"github.com/TBD54566975/vc-jose-cose-go/cid"
-	"github.com/goccy/go-json"
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"

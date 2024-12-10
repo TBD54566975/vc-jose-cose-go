@@ -1,8 +1,9 @@
-package util
+package vc_jose_cose_go
 
 import (
 	"fmt"
 	"github.com/TBD54566975/vc-jose-cose-go/cid"
+	"github.com/TBD54566975/vc-jose-cose-go/util"
 	"github.com/goccy/go-json"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestGenerateKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := GenerateJWK(tt.curve)
+			key, err := util.GenerateJWK(tt.curve)
 			require.NoError(t, err)
 			assert.NotNil(t, key)
 
@@ -40,7 +41,7 @@ func TestGenerateKeys(t *testing.T) {
 			vm := cid.VerificationMethod{
 				ID:           fmt.Sprintf("%s#%s", id, tt.kid),
 				Type:         cid.TypeJSONWebKey,
-				Controller:   SingleOrArray[string]{id},
+				Controller:   util.SingleOrArray[string]{id},
 				PublicKeyJWK: pubKey,
 				SecretKeyJWK: key,
 			}
@@ -53,65 +54,65 @@ func TestGenerateKeys(t *testing.T) {
 }
 
 func TestKeyToBytes(t *testing.T) {
-	for _, keyType := range GetSupportedKeyTypes() {
+	for _, keyType := range util.GetSupportedKeyTypes() {
 		t.Run(string(keyType), func(t *testing.T) {
-			pub, priv, err := GenerateKeyByKeyType(keyType)
+			pub, priv, err := util.GenerateKeyByKeyType(keyType)
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, pub)
 			assert.NotEmpty(t, priv)
 
-			pubKeyBytes, err := PubKeyToBytes(pub)
+			pubKeyBytes, err := util.PubKeyToBytes(pub)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, pubKeyBytes)
 
-			reconstructedPub, err := BytesToPubKey(pubKeyBytes, keyType)
+			reconstructedPub, err := util.BytesToPubKey(pubKeyBytes, keyType)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, reconstructedPub)
 			assert.EqualValues(t, pub, reconstructedPub)
 
-			privKeyBytes, err := PrivKeyToBytes(priv)
+			privKeyBytes, err := util.PrivKeyToBytes(priv)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, privKeyBytes)
 
-			reconstructedPriv, err := BytesToPrivKey(privKeyBytes, keyType)
+			reconstructedPriv, err := util.BytesToPrivKey(privKeyBytes, keyType)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, reconstructedPriv)
 			assert.EqualValues(t, priv, reconstructedPriv)
 
-			kt, err := GetKeyTypeFromPrivateKey(priv)
+			kt, err := util.GetKeyTypeFromPrivateKey(priv)
 			assert.NoError(t, err)
 			assert.Equal(t, keyType, kt)
 		})
 	}
 
-	for _, keyType := range GetSupportedKeyTypes() {
+	for _, keyType := range util.GetSupportedKeyTypes() {
 		t.Run(string(keyType)+" with pointers", func(t *testing.T) {
-			pub, priv, err := GenerateKeyByKeyType(keyType)
+			pub, priv, err := util.GenerateKeyByKeyType(keyType)
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, pub)
 			assert.NotEmpty(t, priv)
 
-			pubKeyBytes, err := PubKeyToBytes(&pub)
+			pubKeyBytes, err := util.PubKeyToBytes(&pub)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, pubKeyBytes)
 
-			reconstructedPub, err := BytesToPubKey(pubKeyBytes, keyType)
+			reconstructedPub, err := util.BytesToPubKey(pubKeyBytes, keyType)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, reconstructedPub)
 			assert.EqualValues(t, pub, reconstructedPub)
 
-			privKeyBytes, err := PrivKeyToBytes(&priv)
+			privKeyBytes, err := util.PrivKeyToBytes(&priv)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, privKeyBytes)
 
-			reconstructedPriv, err := BytesToPrivKey(privKeyBytes, keyType)
+			reconstructedPriv, err := util.BytesToPrivKey(privKeyBytes, keyType)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, reconstructedPriv)
 			assert.EqualValues(t, priv, reconstructedPriv)
 
-			kt, err := GetKeyTypeFromPrivateKey(&priv)
+			kt, err := util.GetKeyTypeFromPrivateKey(&priv)
 			assert.NoError(t, err)
 			assert.Equal(t, keyType, kt)
 		})
@@ -119,14 +120,14 @@ func TestKeyToBytes(t *testing.T) {
 }
 
 func TestSECP256k1Conversions(t *testing.T) {
-	pk, sk, err := GenerateSECP256k1Key()
+	pk, sk, err := util.GenerateSECP256k1Key()
 	assert.NoError(t, err)
 
 	ecdsaPK := pk.ToECDSA()
 	ecdsaSK := sk.ToECDSA()
 
-	gotPK := SECP256k1ECDSAPubKeyToSECP256k1(*ecdsaPK)
-	gotSK := SECP256k1ECDSASPrivKeyToSECP256k1(*ecdsaSK)
+	gotPK := util.SECP256k1ECDSAPubKeyToSECP256k1(*ecdsaPK)
+	gotSK := util.SECP256k1ECDSASPrivKeyToSECP256k1(*ecdsaSK)
 
 	assert.Equal(t, pk, gotPK)
 	assert.Equal(t, sk, gotSK)
