@@ -1,15 +1,15 @@
-package main
+package vc_jose_cose_go
 
 import (
 	"fmt"
-	"testing"
-
-	"github.com/decentralgabe/vc-jose-cose-go/cid"
-	"github.com/decentralgabe/vc-jose-cose-go/util"
+	"github.com/TBD54566975/vc-jose-cose-go/cid"
+	"github.com/TBD54566975/vc-jose-cose-go/util"
 	"github.com/goccy/go-json"
 	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestGenerateKeys is used to generate sample cid document verification methods

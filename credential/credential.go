@@ -6,7 +6,7 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"github.com/decentralgabe/vc-jose-cose-go/util"
+	"github.com/TBD54566975/vc-jose-cose-go/util"
 )
 
 const (

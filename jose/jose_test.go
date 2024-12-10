@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/decentralgabe/vc-jose-cose-go/credential"
-	"github.com/decentralgabe/vc-jose-cose-go/util"
+	"github.com/TBD54566975/vc-jose-cose-go/credential"
+	"github.com/TBD54566975/vc-jose-cose-go/util"
 )
 
 func Test_Sign_Verify_VerifiableCredential(t *testing.T) {
